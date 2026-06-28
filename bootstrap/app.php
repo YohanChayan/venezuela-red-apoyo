@@ -15,6 +15,11 @@ return Application::configure(basePath: dirname(__DIR__))
         health: '/up',
     )
     ->withMiddleware(function (Middleware $middleware): void {
+        // DigitalOcean App Platform terminates TLS at its edge proxy and
+        // forwards the request internally over HTTP. Trust the proxy so Laravel
+        // honours X-Forwarded-Proto and generates https:// asset URLs.
+        $middleware->trustProxies(at: '*');
+
         $middleware->web(append: [
             IdentifyContributor::class,
             HandleInertiaRequests::class,

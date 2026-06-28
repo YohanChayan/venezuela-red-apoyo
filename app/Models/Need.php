@@ -136,8 +136,11 @@ class Need extends Model implements Auditable
 
     /**
      * The need's overall status, derived dynamically from its commitments: the
-     * status held by the most people wins, ties broken by the most advanced
-     * status. No active commitments means the need is still "solicitada".
+     * need has only reached the stage that its LEAST-advanced active helper has
+     * reached. So it only becomes "entregada"/"resuelta" once EVERY active
+     * commitment has gotten there — one person confirming does NOT close a need
+     * that others are still working on. No active commitments means the need is
+     * still "solicitada".
      */
     public function dominantStatus(): NeedStatus
     {
@@ -152,13 +155,10 @@ class Need extends Model implements Auditable
             return NeedStatus::Solicitada;
         }
 
-        $counts = $active->countBy(fn (NeedCommitment $commitment) => $commitment->status->value);
-        $max = $counts->max();
-
-        return collect(NeedStatus::cases())
-            ->filter(fn (NeedStatus $status) => ($counts->get($status->value, 0)) === $max)
-            ->sortByDesc(fn (NeedStatus $status) => $status->order())
-            ->first();
+        return $active
+            ->sortBy(fn (NeedCommitment $commitment) => $commitment->status->order())
+            ->first()
+            ->status;
     }
 
     /**

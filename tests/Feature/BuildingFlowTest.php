@@ -150,7 +150,7 @@ it('lets one device register several named helpers for the same need', function 
         ->toBe(['ana', 'carlos']);
 });
 
-it('derives the need status from the dominant commitment status', function () {
+it('derives the need status from the least-advanced commitment (the slowest helper)', function () {
     $building = registerBuilding();
     $need = $building->needs()->create([
         'custom_supply_name' => 'Agua',
@@ -167,14 +167,51 @@ it('derives the need status from the dominant commitment status', function () {
 
     $carlos = $need->commitments()->where('contributor_id', $a->id)->firstOrFail();
 
-    // 1 comprometida + 1 en_camino → tie broken toward the most advanced state.
+    // Carlos moves on but Ana is still comprometida → the need is only as far
+    // as the slowest helper, so it stays comprometida.
     $service->transitionCommitment($carlos, NeedStatus::EnCamino, $a);
-    expect($need->fresh()->status)->toBe(NeedStatus::EnCamino);
+    expect($need->fresh()->status)->toBe(NeedStatus::Comprometida);
 
-    // When the second person also moves on, en_camino clearly dominates.
+    // Once Ana also moves on, every helper has reached en_camino.
     $ana = $need->commitments()->where('contributor_id', $b->id)->firstOrFail();
     $service->transitionCommitment($ana, NeedStatus::EnCamino, $b);
     expect($need->fresh()->status)->toBe(NeedStatus::EnCamino);
+});
+
+it('only resolves a need once every commitment is confirmed, not just one', function () {
+    $building = registerBuilding();
+    $need = $building->needs()->create([
+        'custom_supply_name' => 'Agua',
+        'priority' => 'media',
+        'status' => NeedStatus::Solicitada,
+    ]);
+
+    $a = Contributor::create(['token' => 'dev-a', 'trust_level' => 'normal']);
+    $b = Contributor::create(['token' => 'dev-b', 'trust_level' => 'normal']);
+    $service = app(NeedService::class);
+
+    $service->commit($need, $a, 'Carlos');
+    $service->commit($need, $b, 'Ana');
+
+    $carlos = $need->commitments()->where('contributor_id', $a->id)->firstOrFail();
+    $ana = $need->commitments()->where('contributor_id', $b->id)->firstOrFail();
+
+    // Carlos goes all the way to confirmada.
+    $service->transitionCommitment($carlos, NeedStatus::EnCamino, $a);
+    $service->transitionCommitment($carlos, NeedStatus::Entregada, $a);
+    $service->transitionCommitment($carlos, NeedStatus::Confirmada, $a);
+
+    // Ana is still comprometida → the need is NOT resolved and stays open.
+    expect($need->fresh()->status)->toBe(NeedStatus::Comprometida)
+        ->and($need->fresh()->status->isOpen())->toBeTrue();
+
+    // Ana also completes the lifecycle → now the need is resolved/closed.
+    $service->transitionCommitment($ana, NeedStatus::EnCamino, $b);
+    $service->transitionCommitment($ana, NeedStatus::Entregada, $b);
+    $service->transitionCommitment($ana, NeedStatus::Confirmada, $b);
+
+    expect($need->fresh()->status)->toBe(NeedStatus::Confirmada)
+        ->and($need->fresh()->status->isOpen())->toBeFalse();
 });
 
 it('reopens a need when every commitment is cancelled', function () {
