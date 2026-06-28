@@ -1,4 +1,5 @@
 <script setup lang="ts">
+import { statusText } from '@/lib/needStatus';
 import type { NeedsSummary } from '@/types/models';
 
 defineProps<{
@@ -11,14 +12,6 @@ const emit = defineEmits<{
     toggleStatus: [value: string];
     toggleCategory: [id: number];
 }>();
-
-const statusColor: Record<string, string> = {
-    solicitada: 'text-slate-700',
-    comprometida: 'text-blue-600',
-    en_camino: 'text-indigo-600',
-    entregada: 'text-teal-600',
-    confirmada: 'text-green-600',
-};
 </script>
 
 <template>
@@ -49,7 +42,7 @@ const statusColor: Record<string, string> = {
             >
                 <span
                     class="block text-lg leading-none font-bold"
-                    :class="activeNeedStatus === status.value ? 'text-white' : (statusColor[status.value] ?? 'text-slate-700')"
+                    :class="activeNeedStatus === status.value ? 'text-white' : statusText(status.value)"
                 >
                     {{ status.count }}
                 </span>

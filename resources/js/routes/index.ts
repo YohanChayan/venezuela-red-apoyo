@@ -138,7 +138,7 @@ logout.form = logoutForm
 
 /**
 * @see \App\Http\Controllers\BuildingController::home
-* @see app/Http/Controllers/BuildingController.php:37
+* @see app/Http/Controllers/BuildingController.php:43
 * @route '/'
 */
 export const home = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -153,7 +153,7 @@ home.definition = {
 
 /**
 * @see \App\Http\Controllers\BuildingController::home
-* @see app/Http/Controllers/BuildingController.php:37
+* @see app/Http/Controllers/BuildingController.php:43
 * @route '/'
 */
 home.url = (options?: RouteQueryOptions) => {
@@ -162,7 +162,7 @@ home.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\BuildingController::home
-* @see app/Http/Controllers/BuildingController.php:37
+* @see app/Http/Controllers/BuildingController.php:43
 * @route '/'
 */
 home.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -172,7 +172,7 @@ home.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\BuildingController::home
-* @see app/Http/Controllers/BuildingController.php:37
+* @see app/Http/Controllers/BuildingController.php:43
 * @route '/'
 */
 home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -182,7 +182,7 @@ home.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\BuildingController::home
-* @see app/Http/Controllers/BuildingController.php:37
+* @see app/Http/Controllers/BuildingController.php:43
 * @route '/'
 */
 const homeForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -192,7 +192,7 @@ const homeForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\BuildingController::home
-* @see app/Http/Controllers/BuildingController.php:37
+* @see app/Http/Controllers/BuildingController.php:43
 * @route '/'
 */
 homeForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -202,7 +202,7 @@ homeForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\BuildingController::home
-* @see app/Http/Controllers/BuildingController.php:37
+* @see app/Http/Controllers/BuildingController.php:43
 * @route '/'
 */
 homeForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -218,7 +218,8 @@ homeForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 home.form = homeForm
 
 /**
-* @see routes/web.php:33
+* @see \Inertia\Controller::__invoke
+* @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
 * @route '/cuenta'
 */
 export const account = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -232,7 +233,8 @@ account.definition = {
 } satisfies RouteDefinition<["get","head"]>
 
 /**
-* @see routes/web.php:33
+* @see \Inertia\Controller::__invoke
+* @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
 * @route '/cuenta'
 */
 account.url = (options?: RouteQueryOptions) => {
@@ -240,7 +242,8 @@ account.url = (options?: RouteQueryOptions) => {
 }
 
 /**
-* @see routes/web.php:33
+* @see \Inertia\Controller::__invoke
+* @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
 * @route '/cuenta'
 */
 account.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -249,7 +252,8 @@ account.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 })
 
 /**
-* @see routes/web.php:33
+* @see \Inertia\Controller::__invoke
+* @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
 * @route '/cuenta'
 */
 account.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -258,7 +262,8 @@ account.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 })
 
 /**
-* @see routes/web.php:33
+* @see \Inertia\Controller::__invoke
+* @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
 * @route '/cuenta'
 */
 const accountForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -267,7 +272,8 @@ const accountForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 })
 
 /**
-* @see routes/web.php:33
+* @see \Inertia\Controller::__invoke
+* @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
 * @route '/cuenta'
 */
 accountForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -276,7 +282,8 @@ accountForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 })
 
 /**
-* @see routes/web.php:33
+* @see \Inertia\Controller::__invoke
+* @see vendor/inertiajs/inertia-laravel/src/Controller.php:13
 * @route '/cuenta'
 */
 accountForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({

@@ -1,17 +1,11 @@
 <script setup lang="ts">
 import RelativeTime from '@/components/RelativeTime.vue';
 import StatusBadge from '@/components/StatusBadge.vue';
+import { priorityDot } from '@/lib/needStatus';
 import type { BuildingSummary } from '@/types/models';
 import { Link } from '@inertiajs/vue3';
 
 defineProps<{ building: BuildingSummary }>();
-
-const priorityDot: Record<string, string> = {
-    critica: 'bg-red-500',
-    alta: 'bg-orange-500',
-    media: 'bg-amber-500',
-    baja: 'bg-slate-400',
-};
 </script>
 
 <template>

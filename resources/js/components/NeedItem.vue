@@ -1,7 +1,11 @@
 <script setup lang="ts">
+import CommitForm from '@/components/CommitForm.vue';
+import CommitmentRow from '@/components/CommitmentRow.vue';
+import NeedStatusCounts from '@/components/NeedStatusCounts.vue';
 import RelativeTime from '@/components/RelativeTime.vue';
-import type { EnumOption, Need, NeedCommitment } from '@/types/models';
-import { router, useForm } from '@inertiajs/vue3';
+import { priorityBorder, statusPill } from '@/lib/needStatus';
+import type { Need, NeedCommitment } from '@/types/models';
+import { router } from '@inertiajs/vue3';
 import { computed, ref } from 'vue';
 
 const props = defineProps<{ need: Need }>();
@@ -9,48 +13,15 @@ const props = defineProps<{ need: Need }>();
 const updating = ref(false);
 const showPeople = ref(false);
 
-const priorityBorder: Record<string, string> = {
-    critica: 'border-l-red-500',
-    alta: 'border-l-orange-500',
-    media: 'border-l-amber-400',
-    baja: 'border-l-slate-300',
-};
-
-const statusPill: Record<string, string> = {
-    solicitada: 'bg-slate-100 text-slate-600',
-    comprometida: 'bg-blue-100 text-blue-700',
-    en_camino: 'bg-indigo-100 text-indigo-700',
-    entregada: 'bg-teal-100 text-teal-700',
-    confirmada: 'bg-green-100 text-green-700',
-    cancelada: 'bg-slate-100 text-slate-400',
-};
-
-// Friendly labels for each lifecycle step a person can take on their commitment.
-const actionMeta: Record<string, { label: string; primary: boolean }> = {
-    en_camino: { label: '🚚 Voy en camino', primary: true },
-    entregada: { label: '📦 Entregado', primary: true },
-    confirmada: { label: '✅ Confirmar recibido', primary: true },
-    comprometida: { label: '↩ Reactivar', primary: false },
-    cancelada: { label: '✕ Cancelar', primary: false },
-};
-
-const statusCounts = computed(() => props.need.statusCounts ?? []);
 const commitments = computed<NeedCommitment[]>(() => props.need.commitments ?? []);
 const commitCount = computed(() => props.need.commitmentsCount ?? 0);
+const isCancelled = computed(() => props.need.status.value === 'cancelada');
 
 const peopleToggleLabel = computed(() =>
     commitCount.value > 0
         ? `${commitCount.value} ${commitCount.value === 1 ? 'persona' : 'personas'}`
         : 'Nadie se encarga aún',
 );
-
-function actionLabel(transition: EnumOption): string {
-    return actionMeta[transition.value]?.label ?? transition.label;
-}
-
-function isPrimary(transition: EnumOption): boolean {
-    return actionMeta[transition.value]?.primary ?? false;
-}
 
 function advanceCommitment(commitmentId: number, status: string): void {
     router.patch(
@@ -63,20 +34,6 @@ function advanceCommitment(commitmentId: number, status: string): void {
         },
     );
 }
-
-const commitForm = useForm({ name: '' });
-
-function commit(): void {
-    commitForm.post(`/necesidades/${props.need.id}/comprometerse`, {
-        preserveScroll: true,
-        onSuccess: () => {
-            commitForm.reset();
-            showPeople.value = true;
-        },
-    });
-}
-
-const isCancelled = computed(() => props.need.status.value === 'cancelada');
 
 function cancelNeed(): void {
     if (confirm('¿Cancelar toda esta necesidad? Se cancelarán también todos los compromisos.')) {
@@ -111,7 +68,7 @@ function reopenNeed(): void {
             </div>
             <span
                 class="shrink-0 rounded-full px-2.5 py-1 text-xs font-semibold"
-                :class="statusPill[need.status.value] ?? 'bg-slate-100 text-slate-600'"
+                :class="statusPill(need.status.value)"
             >
                 {{ need.status.label }}
             </span>
@@ -119,14 +76,7 @@ function reopenNeed(): void {
 
         <!-- Per-status counters: how many people sit in each lifecycle state. -->
         <div class="mt-2.5 flex flex-wrap items-center gap-1.5">
-            <span
-                v-for="count in statusCounts"
-                :key="count.value"
-                class="rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                :class="statusPill[count.value] ?? 'bg-slate-100 text-slate-600'"
-            >
-                {{ count.label }} · {{ count.count }}
-            </span>
+            <NeedStatusCounts :counts="need.statusCounts ?? []" />
 
             <div class="ml-auto flex items-center gap-1.5">
                 <button
@@ -157,70 +107,22 @@ function reopenNeed(): void {
             </div>
         </div>
 
-        <!-- Toggleable per-person list: each person owns their status + buttons. -->
+        <!-- Toggleable per-person list: each helper owns their status + buttons. -->
         <div v-if="showPeople" class="mt-2 space-y-2 rounded-lg bg-slate-50 p-2.5">
             <ul v-if="commitments.length" class="space-y-2">
-                <li
+                <CommitmentRow
                     v-for="person in commitments"
                     :key="person.id"
-                    class="rounded-lg border border-slate-200 bg-white p-2"
-                >
-                    <div class="flex items-center justify-between gap-2">
-                        <span class="min-w-0 truncate text-sm font-medium text-slate-800">🙋 {{ person.name }}</span>
-                        <span
-                            class="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold"
-                            :class="statusPill[person.status.value] ?? 'bg-slate-100 text-slate-600'"
-                        >
-                            {{ person.status.label }}
-                        </span>
-                    </div>
-                    <div v-if="person.allowedTransitions.length" class="mt-2 flex flex-wrap items-center gap-2">
-                        <template v-for="transition in person.allowedTransitions" :key="transition.value">
-                            <button
-                                v-if="isPrimary(transition)"
-                                type="button"
-                                :disabled="updating"
-                                class="rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
-                                @click="advanceCommitment(person.id, transition.value)"
-                            >
-                                {{ actionLabel(transition) }}
-                            </button>
-                            <button
-                                v-else
-                                type="button"
-                                :disabled="updating"
-                                class="text-xs text-slate-400 transition hover:text-slate-700 disabled:opacity-50"
-                                @click="advanceCommitment(person.id, transition.value)"
-                            >
-                                {{ actionLabel(transition) }}
-                            </button>
-                        </template>
-                    </div>
-                </li>
+                    :commitment="person"
+                    :disabled="updating"
+                    @advance="advanceCommitment"
+                />
             </ul>
             <p v-else class="text-center text-xs text-slate-500">
                 Nadie se ha encargado todavía. ¡Sé el primero!
             </p>
 
-            <form class="flex items-end gap-2 border-t border-slate-200 pt-2" @submit.prevent="commit">
-                <div class="min-w-0 flex-1">
-                    <label class="text-[11px] text-slate-500" :for="`commit-${need.id}`">Tu nombre (opcional)</label>
-                    <input
-                        :id="`commit-${need.id}`"
-                        v-model="commitForm.name"
-                        type="text"
-                        placeholder="Ej. Carlos / Brigada El Valle"
-                        class="mt-0.5 w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:border-slate-400 focus:outline-none"
-                    />
-                </div>
-                <button
-                    type="submit"
-                    :disabled="commitForm.processing"
-                    class="shrink-0 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
-                >
-                    🙋 Me encargo
-                </button>
-            </form>
+            <CommitForm :need-id="need.id" @committed="showPeople = true" />
         </div>
     </li>
 </template>

@@ -9,7 +9,6 @@ use App\Enums\BuildingStatus;
 use App\Enums\BuildingType;
 use App\Enums\NeedPriority;
 use App\Enums\NeedStatus;
-use App\Enums\StructuralStatus;
 use App\Http\Requests\StoreBuildingRequest;
 use App\Http\Requests\UpdateBuildingRequest;
 use App\Http\Resources\BuildingResource;
@@ -26,12 +25,19 @@ use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
+use Illuminate\Support\Facades\Cache;
 use Inertia\Inertia;
 use Inertia\Response;
 use OwenIt\Auditing\Models\Audit;
 
 class BuildingController extends Controller
 {
+    /**
+     * How long the homepage counters are cached. Short enough to feel live,
+     * long enough to spare the database a dozen queries per visit.
+     */
+    private const STATS_TTL_SECONDS = 20;
+
     public function __construct(private readonly BuildingService $buildings) {}
 
     public function index(Request $request): Response
@@ -82,18 +88,6 @@ class BuildingController extends Controller
             'options' => [
                 'types' => EnumOptions::from(BuildingType::cases()),
                 'statuses' => EnumOptions::from(BuildingStatus::cases()),
-            ],
-        ]);
-    }
-
-    public function create(): Response
-    {
-        return Inertia::render('Buildings/Create', [
-            'options' => [
-                'types' => EnumOptions::from(BuildingType::cases()),
-                'statuses' => EnumOptions::from(BuildingStatus::cases()),
-                'modes' => EnumOptions::from(BuildingMode::cases()),
-                'structuralStatuses' => EnumOptions::from(StructuralStatus::cases()),
             ],
         ]);
     }
@@ -151,23 +145,39 @@ class BuildingController extends Controller
     }
 
     /**
+     * Homepage counters. Cached briefly so the list view doesn't fire a dozen
+     * COUNT queries against the (remote) database on every request. Each block
+     * is collapsed into a single aggregate query via conditional sums.
+     *
      * @return array<string, int>
      */
     private function buildStats(): array
     {
-        $closed = [NeedStatus::Confirmada->value, NeedStatus::Cancelada->value];
+        return Cache::remember('home:stats', now()->addSeconds(self::STATS_TTL_SECONDS), function (): array {
+            $closed = [NeedStatus::Confirmada->value, NeedStatus::Cancelada->value];
 
-        return [
-            'total' => Building::count(),
-            'criticos' => Building::where('status', BuildingStatus::Critico->value)->count(),
-            'rescate' => Building::where('mode', BuildingMode::Rescate->value)->count(),
-            'sectores' => Community::count(),
-            'necesidadesAbiertas' => Need::whereNotIn('status', $closed)->count(),
-            'necesidadesCriticas' => Need::where('priority', NeedPriority::Critica->value)
-                ->whereNotIn('status', $closed)
-                ->count(),
-            'hospitales' => Building::where('type', BuildingType::Hospital->value)->count(),
-        ];
+            $buildings = Building::query()
+                ->selectRaw('count(*) as total')
+                ->selectRaw('sum(case when status = ? then 1 else 0 end) as criticos', [BuildingStatus::Critico->value])
+                ->selectRaw('sum(case when mode = ? then 1 else 0 end) as rescate', [BuildingMode::Rescate->value])
+                ->selectRaw('sum(case when type = ? then 1 else 0 end) as hospitales', [BuildingType::Hospital->value])
+                ->first();
+
+            $needs = Need::query()
+                ->selectRaw('sum(case when status not in (?, ?) then 1 else 0 end) as abiertas', $closed)
+                ->selectRaw('sum(case when priority = ? and status not in (?, ?) then 1 else 0 end) as criticas', [NeedPriority::Critica->value, ...$closed])
+                ->first();
+
+            return [
+                'total' => (int) $buildings->total,
+                'criticos' => (int) $buildings->criticos,
+                'rescate' => (int) $buildings->rescate,
+                'sectores' => Community::count(),
+                'necesidadesAbiertas' => (int) $needs->abiertas,
+                'necesidadesCriticas' => (int) $needs->criticas,
+                'hospitales' => (int) $buildings->hospitales,
+            ];
+        });
     }
 
     /**
@@ -175,53 +185,60 @@ class BuildingController extends Controller
      */
     private function buildNeedsSummary(): array
     {
-        $closed = [NeedStatus::Confirmada->value, NeedStatus::Cancelada->value];
+        return Cache::remember('home:needs-summary', now()->addSeconds(self::STATS_TTL_SECONDS), function (): array {
+            $closed = [NeedStatus::Confirmada->value, NeedStatus::Cancelada->value];
 
-        $counts = Need::query()
-            ->selectRaw('status, count(*) as total')
-            ->groupBy('status')
-            ->pluck('total', 'status');
+            $counts = Need::query()
+                ->selectRaw('status, count(*) as total')
+                ->groupBy('status')
+                ->pluck('total', 'status');
 
-        $byStatus = collect([
-            NeedStatus::Solicitada,
-            NeedStatus::Comprometida,
-            NeedStatus::EnCamino,
-            NeedStatus::Entregada,
-            NeedStatus::Confirmada,
-        ])->map(fn (NeedStatus $status) => [
-            'value' => $status->value,
-            'label' => $status->label(),
-            'count' => (int) ($counts[$status->value] ?? 0),
-        ])->all();
+            $byStatus = collect([
+                NeedStatus::Solicitada,
+                NeedStatus::Comprometida,
+                NeedStatus::EnCamino,
+                NeedStatus::Entregada,
+                NeedStatus::Confirmada,
+            ])->map(fn (NeedStatus $status) => [
+                'value' => $status->value,
+                'label' => $status->label(),
+                'count' => (int) ($counts[$status->value] ?? 0),
+            ])->all();
 
-        $categoryCounts = Need::query()
-            ->whereNotIn('status', $closed)
-            ->whereNotNull('supply_category_id')
-            ->selectRaw('supply_category_id, count(*) as total')
-            ->groupBy('supply_category_id')
-            ->orderByDesc('total')
-            ->limit(6)
-            ->pluck('total', 'supply_category_id');
+            // Derived from the grouped counts above — no extra query.
+            $open = (int) $counts
+                ->reject(fn (int $total, string $status) => in_array($status, $closed, true))
+                ->sum();
 
-        $topCategories = SupplyCategory::query()
-            ->whereIn('id', $categoryCounts->keys())
-            ->get(['id', 'name', 'icon'])
-            ->map(fn (SupplyCategory $category) => [
-                'id' => $category->id,
-                'name' => $category->name,
-                'icon' => $category->icon,
-                'count' => (int) $categoryCounts[$category->id],
-            ])
-            ->sortByDesc('count')
-            ->values()
-            ->all();
+            $categoryCounts = Need::query()
+                ->whereNotIn('status', $closed)
+                ->whereNotNull('supply_category_id')
+                ->selectRaw('supply_category_id, count(*) as total')
+                ->groupBy('supply_category_id')
+                ->orderByDesc('total')
+                ->limit(6)
+                ->pluck('total', 'supply_category_id');
 
-        return [
-            'lastHour' => Need::where('created_at', '>=', now()->subHour())->count(),
-            'open' => Need::whereNotIn('status', $closed)->count(),
-            'byStatus' => $byStatus,
-            'topCategories' => $topCategories,
-        ];
+            $topCategories = SupplyCategory::query()
+                ->whereIn('id', $categoryCounts->keys())
+                ->get(['id', 'name', 'icon'])
+                ->map(fn (SupplyCategory $category) => [
+                    'id' => $category->id,
+                    'name' => $category->name,
+                    'icon' => $category->icon,
+                    'count' => (int) $categoryCounts[$category->id],
+                ])
+                ->sortByDesc('count')
+                ->values()
+                ->all();
+
+            return [
+                'lastHour' => Need::where('created_at', '>=', now()->subHour())->count(),
+                'open' => $open,
+                'byStatus' => $byStatus,
+                'topCategories' => $topCategories,
+            ];
+        });
     }
 
     /**

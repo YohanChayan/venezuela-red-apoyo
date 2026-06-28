@@ -2,19 +2,24 @@
 
 use App\Http\Controllers\AdminController;
 use App\Http\Controllers\BuildingController;
+use App\Http\Controllers\FeedbackController;
 use App\Http\Controllers\NeedController;
 use App\Http\Controllers\UserController;
 use App\Http\Middleware\EnsureManager;
 use App\Http\Middleware\EnsureMaster;
 use App\Http\Middleware\EnsureWritable;
 use Illuminate\Support\Facades\Route;
-use Inertia\Inertia;
 
 // Public reads.
 Route::get('/', [BuildingController::class, 'index'])->name('home');
 Route::get('/api/edificios-similares', [BuildingController::class, 'similar'])->name('buildings.similar');
-Route::get('/edificios/registrar', [BuildingController::class, 'create'])->name('buildings.create');
 Route::get('/edificios/{building:slug}', [BuildingController::class, 'show'])->name('buildings.show');
+
+// Anonymous feedback (suggestions, problems, comments). Works even while the
+// emergency brake is on, so it is outside the EnsureWritable group.
+Route::post('/feedback', [FeedbackController::class, 'store'])
+    ->middleware('throttle:10,1')
+    ->name('feedback.store');
 
 // Public writes — rate limited per IP and gated by the admin emergency brake.
 Route::middleware(['throttle:30,1', EnsureWritable::class])->group(function () {
@@ -30,7 +35,8 @@ Route::middleware(['throttle:30,1', EnsureWritable::class])->group(function () {
 });
 
 // Pending-account landing for registered-but-unassigned users.
-Route::get('/cuenta', fn () => Inertia::render('Account/Pending'))->middleware('auth')->name('account');
+// Route::inertia (not a Closure) so the route table stays `route:cache`-able.
+Route::inertia('/cuenta', 'Account/Pending')->middleware('auth')->name('account');
 
 // Management panel — master & admin. Read-only audit monitoring + edit lock.
 Route::middleware(EnsureManager::class)->prefix('admin')->name('admin.')->group(function () {
