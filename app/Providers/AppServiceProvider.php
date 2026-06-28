@@ -37,9 +37,9 @@ class AppServiceProvider extends ServiceProvider
         // Inertia props consume resources directly; drop the "data" wrapper.
         JsonResource::withoutWrapping();
 
-        DB::prohibitDestructiveCommands(
-            app()->isProduction(),
-        );
+        // DB::prohibitDestructiveCommands(
+        //     app()->isProduction(),
+        // );
 
         Password::defaults(fn (): ?Password => app()->isProduction()
             ? Password::min(12)
