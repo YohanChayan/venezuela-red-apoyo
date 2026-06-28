@@ -1,0 +1,35 @@
+# Keep the build context small & avoid leaking local state into the image.
+.git
+.github
+.gitignore
+
+# Dependencies are installed fresh inside the image
+node_modules
+vendor
+
+# Built assets are generated inside the image
+public/build
+public/hot
+
+# Local environment / secrets
+.env
+.env.*
+!.env.example
+
+# Local databases & runtime state
+database/*.sqlite
+storage/logs/*
+storage/framework/cache/*
+storage/framework/sessions/*
+storage/framework/views/*
+
+# Tooling / editor / agents
+.idea
+.vscode
+.agents
+.claude
+.codex
+.mcp.json
+boost.json
+tests
+*.md

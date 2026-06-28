@@ -1,0 +1,28 @@
+<svg width="64" height="64" viewBox="0 0 64 64" xmlns="http://www.w3.org/2000/svg">
+  <defs>
+    <clipPath id="round">
+      <rect width="64" height="64" rx="13" />
+    </clipPath>
+  </defs>
+
+  <g clip-path="url(#round)">
+    <!-- Full Venezuelan flag background. -->
+    <rect x="0" y="0" width="64" height="21.34" fill="#FFCC00" />
+    <rect x="0" y="21.34" width="64" height="21.33" fill="#00247D" />
+    <rect x="0" y="42.66" width="64" height="21.34" fill="#CF142B" />
+
+    <!-- White building silhouette on top; windows + door are cut out so the flag shows through. -->
+    <path
+      fill="#FFFFFF"
+      fill-rule="evenodd"
+      d="M21 14 h22 v42 h-22 Z
+         M26 20 h4 v5 h-4 Z
+         M34 20 h4 v5 h-4 Z
+         M26 28 h4 v5 h-4 Z
+         M34 28 h4 v5 h-4 Z
+         M26 36 h4 v5 h-4 Z
+         M34 36 h4 v5 h-4 Z
+         M30 45 h4 v11 h-4 Z"
+    />
+  </g>
+</svg>

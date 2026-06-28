@@ -1,0 +1,89 @@
+# Development stack (Bluewave-style): live-mounted code, one service per block.
+#
+#   1. Make sure OrbStack is running.
+#   2. docker compose up -d --build
+#   3. docker compose exec app php artisan migrate
+#   4. Open http://localhost:8080   (Vite/HMR is served by the `node` container)
+#
+# Run artisan/composer inside the app container, e.g.:
+#   docker compose exec app php artisan tinker
+#   docker compose exec app composer install
+
+services:
+    app:
+        build:
+            context: .
+            dockerfile: docker/php/Dockerfile
+        container_name: veu_app
+        working_dir: /var/www
+        environment:
+            # Override .env so the containerized app talks to the `mysql` service.
+            APP_URL: http://localhost:8080
+            DB_CONNECTION: mysql
+            DB_HOST: mysql
+            DB_PORT: 3306
+            DB_DATABASE: veu
+            DB_USERNAME: root
+            DB_PASSWORD: root
+        volumes:
+            - '.:/var/www:delegated'
+        networks:
+            - veu_net
+        depends_on:
+            - mysql
+
+    nginx:
+        image: 'nginx:alpine'
+        container_name: veu_nginx
+        ports:
+            - '8080:80'
+        volumes:
+            - '.:/var/www:delegated'
+            - './docker/nginx:/etc/nginx/conf.d'
+        networks:
+            - veu_net
+        depends_on:
+            - app
+
+    mysql:
+        image: 'mysql:8'
+        container_name: veu_mysql
+        restart: unless-stopped
+        ports:
+            - '3309:3306'
+        environment:
+            MYSQL_ROOT_PASSWORD: root
+            MYSQL_DATABASE: veu
+        volumes:
+            - 'veu_mysql_data:/var/lib/mysql'
+        networks:
+            - veu_net
+
+    node:
+        # Same image as `app` (PHP + Node) so the Wayfinder Vite plugin can run
+        # `php artisan wayfinder:generate`.
+        build:
+            context: .
+            dockerfile: docker/php/Dockerfile
+        container_name: veu_node
+        working_dir: /var/www
+        environment:
+            # Makes Vite bind to all interfaces and point HMR at localhost
+            # (see the guarded block in vite.config.ts).
+            DOCKER: 'true'
+        ports:
+            - '5173:5173'
+        volumes:
+            - '.:/var/www:delegated'
+            # Keep the container's Linux node_modules separate from the host's.
+            - 'veu_node_modules:/var/www/node_modules'
+        command: sh -c "npm install && npm run dev"
+        networks:
+            - veu_net
+
+volumes:
+    veu_mysql_data:
+    veu_node_modules:
+
+networks:
+    veu_net:
