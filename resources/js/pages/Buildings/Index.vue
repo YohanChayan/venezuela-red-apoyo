@@ -200,7 +200,7 @@ const grouped = computed<SectorGroup[]>(() => {
                         <template #trigger>
                             <button
                                 type="button"
-                                class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-red-600 px-5 py-3.5 text-base font-bold text-white shadow-sm transition hover:bg-red-700 active:scale-[0.99] sm:w-auto"
+                                class="mt-4 flex w-full items-center justify-center gap-2 rounded-xl bg-slate-900 px-5 py-3.5 text-base font-bold text-white shadow-sm transition hover:bg-slate-800 active:scale-[0.99] sm:w-auto"
                             >
                                 <span
                                     class="text-xl leading-none"
