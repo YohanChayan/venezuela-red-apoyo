@@ -8,7 +8,7 @@ const flash = computed(() => page.props.flash as { success?: string | null; erro
 </script>
 
 <template>
-    <div v-if="flash?.success || flash?.error" class="mx-auto max-w-5xl px-4 pt-4">
+    <div v-if="flash?.success || flash?.error" class="mx-auto max-w-6xl px-4 pt-4">
         <div
             v-if="flash?.success"
             class="rounded-lg border border-green-200 bg-green-50 px-4 py-3 text-sm font-medium text-green-800"

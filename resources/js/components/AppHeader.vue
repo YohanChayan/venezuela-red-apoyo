@@ -6,7 +6,7 @@ import { Link } from '@inertiajs/vue3';
 
 <template>
     <header class="sticky top-0 z-10 border-b border-slate-200 bg-white/90 backdrop-blur">
-        <div class="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+        <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
             <Link href="/" class="flex items-center gap-2.5">
                 <img src="/favicon.svg" alt="VRA" class="h-9 w-9 shrink-0 rounded-md" />
                 <span class="leading-tight">

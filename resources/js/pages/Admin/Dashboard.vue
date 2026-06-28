@@ -64,7 +64,7 @@ function formatDate(value: string | null): string {
 
     <div class="min-h-screen bg-slate-100 text-slate-900">
         <header class="border-b border-slate-200 bg-white">
-            <div class="mx-auto flex max-w-5xl items-center justify-between gap-3 px-4 py-3">
+            <div class="mx-auto flex max-w-6xl items-center justify-between gap-3 px-4 py-3">
                 <h1 class="flex items-center gap-2 font-bold"><span>🛡️</span> Panel de administración</h1>
                 <div class="flex items-center gap-3">
                     <Link v-if="isMaster" href="/admin/usuarios" class="text-sm text-slate-600 hover:text-slate-900">
@@ -80,7 +80,7 @@ function formatDate(value: string | null): string {
 
         <FlashMessage />
 
-        <main class="mx-auto max-w-5xl space-y-6 px-4 py-6">
+        <main class="mx-auto max-w-6xl space-y-6 px-4 py-6">
             <section
                 class="rounded-xl border p-4"
                 :class="editsLocked ? 'border-red-300 bg-red-50' : 'border-slate-200 bg-white'"

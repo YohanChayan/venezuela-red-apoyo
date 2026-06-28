@@ -161,16 +161,9 @@ export interface BuildingStats {
     hospitales: number;
 }
 
-export interface BuildingHistoryChange {
-    field: string;
-    old: string | number | null;
-    new: string | number | null;
-}
-
 export interface BuildingHistoryEntry {
     id: number;
-    event: string;
     user: string;
+    summary: string;
     at: string | null;
-    changes: BuildingHistoryChange[];
 }

@@ -87,7 +87,7 @@ const grouped = computed<SectorGroup[]>(() => {
         <AppHeader />
         <FlashMessage />
 
-        <main class="mx-auto max-w-5xl px-4 py-6">
+        <main class="mx-auto max-w-6xl px-4 py-6">
             <section class="mb-5 overflow-hidden rounded-2xl border border-slate-200 bg-white shadow-sm">
                 <div class="h-1.5 w-full bg-[linear-gradient(to_right,#FFCC00_0_33.3%,#00247D_33.3%_66.6%,#CF142B_66.6%)]" />
                 <div class="flex items-center gap-3 px-5 py-4">
