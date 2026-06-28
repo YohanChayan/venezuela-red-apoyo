@@ -37,7 +37,6 @@ class BuildingResource extends JsonResource
             'address' => $this->address,
             'lat' => $this->lat,
             'lng' => $this->lng,
-            'peopleTrapped' => $this->people_trapped_estimate,
             'peopleEvacuated' => $this->people_evacuated,
             'residents' => $this->residents_estimate,
             'contactName' => $this->contact_name,

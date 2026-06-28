@@ -19,6 +19,10 @@ class NeedResource extends JsonResource
      */
     public function toArray(Request $request): array
     {
+        // The overall status is derived dynamically from the mix of per-person
+        // commitments, not read from the stored column.
+        $status = $this->dominantStatus();
+
         return [
             'id' => $this->id,
             'name' => $this->displayName(),
@@ -30,18 +34,25 @@ class NeedResource extends JsonResource
             'quantity' => $this->quantity,
             'unit' => $this->unit,
             'priority' => EnumOptions::one($this->priority),
-            'status' => EnumOptions::one($this->status),
-            'allowedTransitions' => EnumOptions::from($this->status->allowedTransitions()),
-            'isOpen' => $this->status->isOpen(),
+            'status' => EnumOptions::one($status),
+            'isOpen' => $status->isOpen(),
             'notes' => $this->notes,
             'createdBy' => $this->created_by,
             'claimedBy' => $this->claimedBy?->name,
             'claimedAt' => $this->claimed_at?->toIso8601String(),
-            'commitmentsCount' => $this->whenLoaded('commitments', fn () => $this->commitments->count(), 0),
+            'commitmentsCount' => $this->whenLoaded('commitments', fn () => $this->activeCommitments()->count(), 0),
+            'statusCounts' => $this->whenLoaded('commitments', fn () => collect($this->commitmentStatusCounts())
+                ->map(fn (array $entry) => [
+                    ...EnumOptions::one($entry['status']),
+                    'count' => $entry['count'],
+                ])->all()),
             'commitments' => $this->whenLoaded('commitments', fn () => $this->commitments
                 ->sortByDesc('created_at')
                 ->map(fn ($commitment) => [
+                    'id' => $commitment->id,
                     'name' => $commitment->name ?: 'Anónimo',
+                    'status' => EnumOptions::one($commitment->status),
+                    'allowedTransitions' => EnumOptions::from($commitment->status->commitmentTransitions()),
                     'at' => $commitment->created_at?->toIso8601String(),
                 ])->values()),
             'createdAt' => $this->created_at?->toIso8601String(),

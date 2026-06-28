@@ -34,7 +34,7 @@ class BuildingService
             ...$this->mapAttributes($data),
             'community_id' => $community?->id,
             'slug' => $this->uniqueSlug($data['name']),
-            'status' => $manualStatus?->value ?? BuildingStatus::SinAsignar->value,
+            'status' => $manualStatus?->value ?? BuildingStatus::NecesitaApoyo->value,
             'status_is_manual' => $manualStatus !== null,
             'notes_updated_at' => filled($data['notes'] ?? null) ? now() : null,
             'last_reported_at' => now(),
@@ -114,11 +114,10 @@ class BuildingService
     private function mapAttributes(array $data): array
     {
         $structural = $data['structural_status'] ?? StructuralStatus::SinEvaluar->value;
-        $trapped = (int) ($data['people_trapped_estimate'] ?? 0);
 
-        // "Situación" is no longer asked: rescue is inferred from trapped people
-        // or a damaged/collapsed structure; everything else is resupply.
-        $isRescue = $trapped > 0 || in_array($structural, [
+        // "Situación" is no longer asked: rescue is inferred from a
+        // damaged/collapsed structure; everything else is resupply.
+        $isRescue = in_array($structural, [
             StructuralStatus::Colapsado->value,
             StructuralStatus::Danado->value,
         ], true);
@@ -131,7 +130,6 @@ class BuildingService
             'address' => $data['address'] ?? null,
             'lat' => $data['lat'] ?? null,
             'lng' => $data['lng'] ?? null,
-            'people_trapped_estimate' => $data['people_trapped_estimate'] ?? null,
             'residents_estimate' => $data['residents_estimate'] ?? null,
             'contact_name' => $data['contact_name'] ?? null,
             'contact_phone' => $data['contact_phone'] ?? null,

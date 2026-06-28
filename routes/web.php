@@ -23,8 +23,8 @@ Route::middleware(['throttle:30,1', EnsureWritable::class])->group(function () {
 
     Route::post('/edificios/{building:slug}/necesidades', [NeedController::class, 'store'])->name('needs.store');
     Route::post('/edificios/{building:slug}/necesidades/lote', [NeedController::class, 'storeBatch'])->name('needs.batch');
-    Route::patch('/necesidades/{need}/estado', [NeedController::class, 'updateStatus'])->name('needs.status');
     Route::post('/necesidades/{need}/comprometerse', [NeedController::class, 'commit'])->name('needs.commit');
+    Route::patch('/commitments/{commitment}/estado', [NeedController::class, 'updateCommitmentStatus'])->name('commitments.status');
 });
 
 // Pending-account landing for registered-but-unassigned users.

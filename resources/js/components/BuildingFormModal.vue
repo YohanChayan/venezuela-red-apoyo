@@ -56,15 +56,11 @@ const form = useForm({
     municipality: props.building?.community?.municipality ?? '',
     state: props.building?.community?.state ?? 'La Guaira',
     address: props.building?.address ?? '',
-    people_trapped_estimate: (props.building?.peopleTrapped ?? undefined) as number | undefined,
     residents_estimate: (props.building?.residents ?? undefined) as number | undefined,
     contact_name: props.building?.contactName ?? '',
     contact_phone: props.building?.contactPhone ?? '',
     notes: props.building?.notes ?? '',
 });
-
-// People-trapped only makes sense for buildings, schools or unspecified places.
-const showsTrapped = computed(() => ['residencial', 'otro'].includes(form.type));
 
 function submit(): void {
     const onSuccess = () => {
@@ -211,12 +207,6 @@ watch(
                     <p v-if="form.status === 'auto'" class="text-xs text-slate-500">
                         El sistema asigna el color automáticamente según las necesidades y el estado del lugar.
                     </p>
-                </div>
-
-                <div v-if="showsTrapped" class="space-y-1.5">
-                    <Label for="trapped">Personas atrapadas (est.)</Label>
-                    <Input id="trapped" v-model.number="form.people_trapped_estimate" type="number" min="0" />
-                    <p class="text-xs text-slate-400">Si hay personas atrapadas, marcamos el lugar como rescate.</p>
                 </div>
 
                 <div class="grid grid-cols-3 gap-3">

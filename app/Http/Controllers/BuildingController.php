@@ -164,7 +164,6 @@ class BuildingController extends Controller
             'necesidadesCriticas' => Need::where('priority', NeedPriority::Critica->value)
                 ->whereNotIn('status', $closed)
                 ->count(),
-            'personasAtrapadas' => (int) Building::sum('people_trapped_estimate'),
             'hospitales' => Building::where('type', BuildingType::Hospital->value)->count(),
         ];
     }

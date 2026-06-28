@@ -44,7 +44,6 @@ const fieldLabels: Record<string, string> = {
     contact_name: 'Contacto',
     contact_phone: 'Teléfono',
     notes: 'Notas',
-    people_trapped_estimate: 'Personas atrapadas',
     priority: 'Prioridad',
     quantity: 'Cantidad',
     custom_supply_name: 'Insumo',

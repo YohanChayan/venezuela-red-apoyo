@@ -44,7 +44,6 @@ class Building extends Model implements Auditable
         'status_is_manual',
         'mode',
         'structural_status',
-        'people_trapped_estimate',
         'people_evacuated',
         'residents_estimate',
         'contact_name',

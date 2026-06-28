@@ -36,7 +36,6 @@ class UpdateBuildingRequest extends FormRequest
             'lat' => ['nullable', 'numeric', 'between:-90,90'],
             'lng' => ['nullable', 'numeric', 'between:-180,180'],
 
-            'people_trapped_estimate' => ['nullable', 'integer', 'min:0', 'max:100000'],
             'residents_estimate' => ['nullable', 'integer', 'min:0', 'max:1000000'],
 
             'contact_name' => ['nullable', 'string', 'max:255'],

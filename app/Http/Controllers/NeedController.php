@@ -9,6 +9,7 @@ use App\Http\Requests\StoreNeedsRequest;
 use App\Http\Requests\UpdateNeedStatusRequest;
 use App\Models\Building;
 use App\Models\Need;
+use App\Models\NeedCommitment;
 use App\Services\NeedService;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
@@ -33,13 +34,6 @@ class NeedController extends Controller
         return back()->with('success', $message);
     }
 
-    public function updateStatus(UpdateNeedStatusRequest $request, Need $need): RedirectResponse
-    {
-        $this->needs->transition($need, $request->targetStatus(), $this->contributor($request));
-
-        return back()->with('success', 'Estado de la necesidad actualizado.');
-    }
-
     public function commit(Request $request, Need $need): RedirectResponse
     {
         $data = $request->validate(['name' => ['nullable', 'string', 'max:255']]);
@@ -47,5 +41,12 @@ class NeedController extends Controller
         $this->needs->commit($need, $this->contributor($request), $data['name'] ?? null);
 
         return back()->with('success', 'Te anotaste para esta necesidad. ¡Gracias!');
+    }
+
+    public function updateCommitmentStatus(UpdateNeedStatusRequest $request, NeedCommitment $commitment): RedirectResponse
+    {
+        $this->needs->transitionCommitment($commitment, $request->targetStatus(), $this->contributor($request));
+
+        return back()->with('success', 'Estado actualizado.');
     }
 }

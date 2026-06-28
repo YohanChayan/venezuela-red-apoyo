@@ -6,18 +6,7 @@ import laravel from 'laravel-vite-plugin';
 import { bunny } from 'laravel-vite-plugin/fonts';
 import { defineConfig } from 'vite';
 
-export default defineConfig({
-    // When running inside the `node` container, bind to all interfaces and tell
-    // the browser to reach HMR at localhost. Has no effect during native dev.
-    server: process.env.DOCKER
-        ? {
-              host: '0.0.0.0',
-              port: 5173,
-              strictPort: true,
-              hmr: { host: 'localhost' },
-              watch: { usePolling: true },
-          }
-        : undefined,
+export default defineConfig(({ command }) => ({
     plugins: [
         laravel({
             input: ['resources/css/app.css', 'resources/js/app.ts'],
@@ -38,8 +27,11 @@ export default defineConfig({
                 },
             },
         }),
-        wayfinder({
-            formVariants: true,
-        }),
+        // Wayfinder shells out to `php artisan wayfinder:generate`, so it only
+        // runs during local dev where PHP is available. The generated files in
+        // resources/js/{actions,routes,wayfinder} are committed so production
+        // builds (e.g. DigitalOcean App Platform, which has no PHP in the Node
+        // build step) consume them directly without regenerating.
+        ...(command === 'serve' ? [wayfinder({ formVariants: true })] : []),
     ],
-});
+}));

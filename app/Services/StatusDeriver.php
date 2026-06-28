@@ -4,7 +4,6 @@ declare(strict_types=1);
 
 namespace App\Services;
 
-use App\Enums\BuildingMode;
 use App\Enums\BuildingStatus;
 use App\Enums\NeedPriority;
 use App\Enums\StructuralStatus;
@@ -12,9 +11,10 @@ use App\Models\Building;
 use App\Models\Need;
 
 /**
- * Derives a building's semaphore status from its open needs, structural
- * condition and trapped-people estimate. Keeps "alarm level" in sync with
- * reality automatically; a manual override bypasses this (status_is_manual).
+ * Derives a building's semaphore status from its open needs and structural
+ * condition. Keeps "alarm level" in sync with reality automatically; a manual
+ * override bypasses this (status_is_manual). The baseline for an unevaluated
+ * place is "necesita apoyo".
  */
 class StatusDeriver
 {
@@ -27,26 +27,17 @@ class StatusDeriver
         );
 
         if (
-            ($building->people_trapped_estimate ?? 0) > 0
-            || $building->structural_status === StructuralStatus::Colapsado
+            $building->structural_status === StructuralStatus::Colapsado
             || $hasCritical
         ) {
             return BuildingStatus::Critico;
         }
 
-        if (
-            $openNeeds->isNotEmpty()
-            || $building->structural_status === StructuralStatus::Danado
-            || $building->mode === BuildingMode::Rescate
-        ) {
-            return BuildingStatus::NecesitaApoyo;
-        }
-
-        if ($building->structural_status === StructuralStatus::Seguro) {
+        if ($building->structural_status === StructuralStatus::Seguro && $openNeeds->isEmpty()) {
             return BuildingStatus::Normal;
         }
 
-        return BuildingStatus::SinAsignar;
+        return BuildingStatus::NecesitaApoyo;
     }
 
     /**

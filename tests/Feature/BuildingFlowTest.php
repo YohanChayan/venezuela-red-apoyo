@@ -31,14 +31,14 @@ it('registers a building from the public form without authentication', function 
     $response = $this->post('/edificios', [
         'name' => 'Edificio Prueba',
         'type' => 'residencial',
-        'people_trapped_estimate' => 3,
+        'structural_status' => 'colapsado',
         'community_name' => 'San Bernardino',
         'state' => 'Distrito Capital',
     ]);
 
     $building = Building::firstWhere('name', 'Edificio Prueba');
 
-    // Rescue mode is inferred from trapped people, not a manual field.
+    // Rescue mode is inferred from a collapsed/damaged structure, not a manual field.
     expect($building)->not->toBeNull()
         ->and($building->mode)->toBe(BuildingMode::Rescate)
         ->and($building->community->name)->toBe('San Bernardino');
@@ -125,11 +125,76 @@ it('records commitments from multiple people and moves the need to asignada', fu
     $service = app(NeedService::class);
 
     $service->commit($need, $a, 'Carlos');
-    $service->commit($need, $a, 'Carlos'); // same person → no duplicate
+    $service->commit($need, $a, 'Carlos'); // same name → no duplicate
     $service->commit($need, $b, 'Ana');
 
     expect($need->commitments()->count())->toBe(2)
         ->and($need->fresh()->status)->toBe(NeedStatus::Comprometida);
+});
+
+it('lets one device register several named helpers for the same need', function () {
+    $building = registerBuilding();
+    $need = $building->needs()->create([
+        'custom_supply_name' => 'Agua',
+        'priority' => 'media',
+        'status' => NeedStatus::Solicitada,
+    ]);
+
+    // A single contributor (one browser) anotando varias personas.
+    $this->post("/necesidades/{$need->id}/comprometerse", ['name' => 'Carlos'])->assertRedirect();
+    $this->post("/necesidades/{$need->id}/comprometerse", ['name' => 'Ana'])->assertRedirect();
+    $this->post("/necesidades/{$need->id}/comprometerse", ['name' => 'carlos'])->assertRedirect(); // dup name (case-insensitive)
+
+    expect($need->commitments()->count())->toBe(2)
+        ->and($need->commitments()->pluck('name')->map(fn ($n) => mb_strtolower($n))->sort()->values()->all())
+        ->toBe(['ana', 'carlos']);
+});
+
+it('derives the need status from the dominant commitment status', function () {
+    $building = registerBuilding();
+    $need = $building->needs()->create([
+        'custom_supply_name' => 'Agua',
+        'priority' => 'media',
+        'status' => NeedStatus::Solicitada,
+    ]);
+
+    $a = Contributor::create(['token' => 'dev-a', 'trust_level' => 'normal']);
+    $b = Contributor::create(['token' => 'dev-b', 'trust_level' => 'normal']);
+    $service = app(NeedService::class);
+
+    $service->commit($need, $a, 'Carlos');
+    $service->commit($need, $b, 'Ana');
+
+    $carlos = $need->commitments()->where('contributor_id', $a->id)->firstOrFail();
+
+    // 1 comprometida + 1 en_camino → tie broken toward the most advanced state.
+    $service->transitionCommitment($carlos, NeedStatus::EnCamino, $a);
+    expect($need->fresh()->status)->toBe(NeedStatus::EnCamino);
+
+    // When the second person also moves on, en_camino clearly dominates.
+    $ana = $need->commitments()->where('contributor_id', $b->id)->firstOrFail();
+    $service->transitionCommitment($ana, NeedStatus::EnCamino, $b);
+    expect($need->fresh()->status)->toBe(NeedStatus::EnCamino);
+});
+
+it('reopens a need when every commitment is cancelled', function () {
+    $building = registerBuilding();
+    $need = $building->needs()->create([
+        'custom_supply_name' => 'Agua',
+        'priority' => 'media',
+        'status' => NeedStatus::Solicitada,
+    ]);
+
+    $a = Contributor::create(['token' => 'dev-a', 'trust_level' => 'normal']);
+    $service = app(NeedService::class);
+
+    $service->commit($need, $a, 'Carlos');
+    expect($need->fresh()->status)->toBe(NeedStatus::Comprometida);
+
+    $carlos = $need->commitments()->firstOrFail();
+    $service->transitionCommitment($carlos, NeedStatus::Cancelada, $a);
+
+    expect($need->fresh()->status)->toBe(NeedStatus::Solicitada);
 });
 
 it('commits to a need via the public endpoint', function () {
@@ -165,7 +230,7 @@ it('filters places by an open need category', function () {
         ->assertDontSee('SinPedido');
 });
 
-it('enforces the need lifecycle state machine', function () {
+it('enforces the per-commitment lifecycle state machine', function () {
     $building = registerBuilding();
     $need = $building->needs()->create([
         'custom_supply_name' => 'Agua',
@@ -173,18 +238,22 @@ it('enforces the need lifecycle state machine', function () {
         'status' => NeedStatus::Solicitada,
     ]);
 
-    // Valid: solicitada -> comprometida
-    $this->patch("/necesidades/{$need->id}/estado", ['status' => 'comprometida'])
+    // A person commits (starts at "comprometida").
+    $this->post("/necesidades/{$need->id}/comprometerse", ['name' => 'Carlos'])->assertRedirect();
+    $commitment = $need->commitments()->firstOrFail();
+
+    // Valid: comprometida -> en_camino
+    $this->patch("/commitments/{$commitment->id}/estado", ['status' => 'en_camino'])
         ->assertRedirect();
 
-    expect($need->fresh()->status)->toBe(NeedStatus::Comprometida)
-        ->and($need->fresh()->claimed_by_contributor_id)->not->toBeNull();
+    expect($commitment->fresh()->status)->toBe(NeedStatus::EnCamino)
+        ->and($need->fresh()->status)->toBe(NeedStatus::EnCamino);
 
-    // Invalid: comprometida -> confirmada (must pass through en_camino/entregada)
-    $this->patch("/necesidades/{$need->id}/estado", ['status' => 'confirmada'])
+    // Invalid: en_camino -> confirmada (must pass through entregada)
+    $this->patch("/commitments/{$commitment->id}/estado", ['status' => 'confirmada'])
         ->assertSessionHasErrors('status');
 
-    expect($need->fresh()->status)->toBe(NeedStatus::Comprometida);
+    expect($commitment->fresh()->status)->toBe(NeedStatus::EnCamino);
 });
 
 it('attributes need changes to a contributor in the audit history', function () {
@@ -197,7 +266,8 @@ it('attributes need changes to a contributor in the audit history', function () 
         'status' => NeedStatus::Solicitada,
     ]);
 
-    $this->patch("/necesidades/{$need->id}/estado", ['status' => 'comprometida']);
+    // Committing flips the need solicitada -> comprometida, which is audited.
+    $this->post("/necesidades/{$need->id}/comprometerse", ['name' => 'Carlos']);
 
     $audit = $need->audits()->latest()->first();
 
@@ -235,10 +305,10 @@ it('rejects an edit with a stale version (optimistic lock)', function () {
     expect($building->fresh()->name)->toBe('Bloqueo');
 });
 
-it('defaults a new building to "sin asignar" so it does not alarm', function () {
+it('defaults a new building to "necesita apoyo"', function () {
     $building = registerBuilding(['name' => 'Nuevo', 'type' => 'residencial']);
 
-    expect($building->fresh()->status)->toBe(BuildingStatus::SinAsignar)
+    expect($building->fresh()->status)->toBe(BuildingStatus::NecesitaApoyo)
         ->and($building->fresh()->status_is_manual)->toBeFalse();
 });
 

@@ -15,7 +15,6 @@ const counters = computed<Counter[]>(() => [
     { label: 'Edificios', value: props.stats.total, icon: '🏢', accent: 'bg-white border-slate-200 text-slate-900' },
     { label: 'Críticos', value: props.stats.criticos, icon: '🔴', accent: 'bg-red-50 border-red-200 text-red-700' },
     { label: 'En rescate', value: props.stats.rescate, icon: '🆘', accent: 'bg-orange-50 border-orange-200 text-orange-700' },
-    { label: 'Personas atrapadas', value: props.stats.personasAtrapadas, icon: '⚠️', accent: 'bg-red-600 border-red-700 text-white' },
     { label: 'Necesidades abiertas', value: props.stats.necesidadesAbiertas, icon: '📦', accent: 'bg-white border-slate-200 text-slate-900' },
     { label: 'Necesidades críticas', value: props.stats.necesidadesCriticas, icon: '🚨', accent: 'bg-amber-50 border-amber-200 text-amber-700' },
     { label: 'Hospitales', value: props.stats.hospitales, icon: '🏥', accent: 'bg-white border-slate-200 text-slate-900' },

@@ -1,20 +1,13 @@
 <script setup lang="ts">
-import CommitmentsSheet from '@/components/CommitmentsSheet.vue';
 import RelativeTime from '@/components/RelativeTime.vue';
-import type { EnumOption, Need } from '@/types/models';
-import { router } from '@inertiajs/vue3';
-import { computed, onMounted, ref } from 'vue';
+import type { EnumOption, Need, NeedCommitment } from '@/types/models';
+import { router, useForm } from '@inertiajs/vue3';
+import { computed, ref } from 'vue';
 
 const props = defineProps<{ need: Need }>();
 
 const updating = ref(false);
-
-// reka-ui (the Sheet) generates ids that differ between SSR and the browser,
-// so only mount the interactive panel on the client to avoid hydration noise.
-const mounted = ref(false);
-onMounted(() => {
-    mounted.value = true;
-});
+const showPeople = ref(false);
 
 const priorityBorder: Record<string, string> = {
     critica: 'border-l-red-500',
@@ -32,42 +25,36 @@ const statusPill: Record<string, string> = {
     cancelada: 'bg-slate-100 text-slate-400',
 };
 
-// Friendly labels for the forward lifecycle steps (committing is handled apart).
+// Friendly labels for each lifecycle step a person can take on their commitment.
 const actionMeta: Record<string, { label: string; primary: boolean }> = {
     en_camino: { label: '🚚 Voy en camino', primary: true },
     entregada: { label: '📦 Entregado', primary: true },
     confirmada: { label: '✅ Confirmar recibido', primary: true },
-    solicitada: { label: '↩ Reabrir', primary: false },
+    comprometida: { label: '↩ Reactivar', primary: false },
     cancelada: { label: '✕ Cancelar', primary: false },
 };
 
-const forwardActions = computed(() =>
-    props.need.allowedTransitions.filter((t) => actionMeta[t.value]?.primary),
-);
-const secondaryActions = computed(() =>
-    props.need.allowedTransitions.filter((t) => actionMeta[t.value] && !actionMeta[t.value].primary),
-);
-
+const statusCounts = computed(() => props.need.statusCounts ?? []);
+const commitments = computed<NeedCommitment[]>(() => props.need.commitments ?? []);
 const commitCount = computed(() => props.need.commitmentsCount ?? 0);
 
-const commitLabel = computed(() =>
+const peopleToggleLabel = computed(() =>
     commitCount.value > 0
-        ? `${commitCount.value} se ${commitCount.value === 1 ? 'encarga' : 'encargan'}`
-        : 'Me encargo',
-);
-const commitClass = computed(() =>
-    commitCount.value > 0
-        ? 'bg-blue-50 text-blue-700 hover:bg-blue-100'
-        : 'bg-slate-900 text-white hover:bg-slate-800',
+        ? `${commitCount.value} ${commitCount.value === 1 ? 'persona' : 'personas'}`
+        : 'Nadie se encarga aún',
 );
 
-function label(transition: EnumOption): string {
+function actionLabel(transition: EnumOption): string {
     return actionMeta[transition.value]?.label ?? transition.label;
 }
 
-function advance(status: string): void {
+function isPrimary(transition: EnumOption): boolean {
+    return actionMeta[transition.value]?.primary ?? false;
+}
+
+function advanceCommitment(commitmentId: number, status: string): void {
     router.patch(
-        `/necesidades/${props.need.id}/estado`,
+        `/commitments/${commitmentId}/estado`,
         { status },
         {
             preserveScroll: true,
@@ -75,6 +62,18 @@ function advance(status: string): void {
             onFinish: () => (updating.value = false),
         },
     );
+}
+
+const commitForm = useForm({ name: '' });
+
+function commit(): void {
+    commitForm.post(`/necesidades/${props.need.id}/comprometerse`, {
+        preserveScroll: true,
+        onSuccess: () => {
+            commitForm.reset();
+            showPeople.value = true;
+        },
+    });
 }
 </script>
 
@@ -106,49 +105,92 @@ function advance(status: string): void {
             </span>
         </div>
 
-        <div class="mt-2.5 flex flex-wrap items-center gap-2">
-            <template v-if="need.isOpen">
-                <CommitmentsSheet v-if="mounted" :need="need">
-                    <template #trigger>
-                        <button
-                            type="button"
-                            class="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
-                            :class="commitClass"
-                        >
-                            🙋 {{ commitLabel }}
-                        </button>
-                    </template>
-                </CommitmentsSheet>
-                <button
-                    v-else
-                    type="button"
-                    class="rounded-lg px-3 py-1.5 text-xs font-semibold transition"
-                    :class="commitClass"
-                >
-                    🙋 {{ commitLabel }}
-                </button>
-            </template>
+        <!-- Per-status counters: how many people sit in each lifecycle state. -->
+        <div class="mt-2.5 flex flex-wrap items-center gap-1.5">
+            <span
+                v-for="count in statusCounts"
+                :key="count.value"
+                class="rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                :class="statusPill[count.value] ?? 'bg-slate-100 text-slate-600'"
+            >
+                {{ count.label }} · {{ count.count }}
+            </span>
 
             <button
-                v-for="transition in forwardActions"
-                :key="transition.value"
                 type="button"
-                :disabled="updating"
-                class="rounded-lg bg-slate-900 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
-                @click="advance(transition.value)"
+                class="ml-auto rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100"
+                :aria-expanded="showPeople"
+                @click="showPeople = !showPeople"
             >
-                {{ label(transition) }}
+                👥 {{ peopleToggleLabel }}
+                <span class="ml-0.5 inline-block transition" :class="{ 'rotate-180': showPeople }">▾</span>
             </button>
-            <button
-                v-for="transition in secondaryActions"
-                :key="transition.value"
-                type="button"
-                :disabled="updating"
-                class="text-xs text-slate-400 hover:text-slate-700 disabled:opacity-50"
-                @click="advance(transition.value)"
-            >
-                {{ label(transition) }}
-            </button>
+        </div>
+
+        <!-- Toggleable per-person list: each person owns their status + buttons. -->
+        <div v-if="showPeople" class="mt-2 space-y-2 rounded-lg bg-slate-50 p-2.5">
+            <ul v-if="commitments.length" class="space-y-2">
+                <li
+                    v-for="person in commitments"
+                    :key="person.id"
+                    class="rounded-lg border border-slate-200 bg-white p-2"
+                >
+                    <div class="flex items-center justify-between gap-2">
+                        <span class="min-w-0 truncate text-sm font-medium text-slate-800">🙋 {{ person.name }}</span>
+                        <span
+                            class="shrink-0 rounded-full px-2 py-0.5 text-[11px] font-semibold"
+                            :class="statusPill[person.status.value] ?? 'bg-slate-100 text-slate-600'"
+                        >
+                            {{ person.status.label }}
+                        </span>
+                    </div>
+                    <div v-if="person.allowedTransitions.length" class="mt-2 flex flex-wrap items-center gap-2">
+                        <template v-for="transition in person.allowedTransitions" :key="transition.value">
+                            <button
+                                v-if="isPrimary(transition)"
+                                type="button"
+                                :disabled="updating"
+                                class="rounded-lg bg-slate-900 px-2.5 py-1 text-xs font-semibold text-white transition hover:bg-slate-800 disabled:opacity-50"
+                                @click="advanceCommitment(person.id, transition.value)"
+                            >
+                                {{ actionLabel(transition) }}
+                            </button>
+                            <button
+                                v-else
+                                type="button"
+                                :disabled="updating"
+                                class="text-xs text-slate-400 transition hover:text-slate-700 disabled:opacity-50"
+                                @click="advanceCommitment(person.id, transition.value)"
+                            >
+                                {{ actionLabel(transition) }}
+                            </button>
+                        </template>
+                    </div>
+                </li>
+            </ul>
+            <p v-else class="text-center text-xs text-slate-500">
+                Nadie se ha encargado todavía. ¡Sé el primero!
+            </p>
+
+            <form class="flex items-end gap-2 border-t border-slate-200 pt-2" @submit.prevent="commit">
+                <div class="min-w-0 flex-1">
+                    <label class="text-[11px] text-slate-500" :for="`commit-${need.id}`">Tu nombre (opcional)</label>
+                    <input
+                        :id="`commit-${need.id}`"
+                        v-model="commitForm.name"
+                        type="text"
+                        placeholder="Ej. Carlos / Brigada El Valle"
+                        class="mt-0.5 w-full rounded-lg border border-slate-300 px-2.5 py-1.5 text-sm focus:border-slate-400 focus:outline-none"
+                    />
+                </div>
+                <button
+                    type="submit"
+                    :disabled="commitForm.processing"
+                    class="shrink-0 rounded-lg bg-red-600 px-3 py-1.5 text-xs font-semibold text-white transition hover:bg-red-700 disabled:opacity-50"
+                >
+                    🙋 Me encargo
+                </button>
+            </form>
         </div>
     </li>
 </template>

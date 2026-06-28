@@ -23,7 +23,6 @@ const form = useForm({
     municipality: '',
     state: '',
     address: '',
-    people_trapped_estimate: null as number | null,
     residents_estimate: null as number | null,
     contact_name: '',
     contact_phone: '',
@@ -126,15 +125,6 @@ function submit(): void {
                         </label>
                     </div>
 
-                    <label v-if="form.mode === 'rescate'" class="block">
-                        <span class="text-sm font-medium text-slate-700">Personas atrapadas (estimado)</span>
-                        <input
-                            v-model.number="form.people_trapped_estimate"
-                            type="number"
-                            min="0"
-                            class="mt-1 w-full rounded-lg border border-slate-300 px-3 py-2 text-sm"
-                        />
-                    </label>
                 </div>
 
                 <div class="rounded-xl border border-slate-200 bg-white p-4 space-y-4">

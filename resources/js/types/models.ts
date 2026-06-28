@@ -29,7 +29,6 @@ export interface BuildingSummary {
     address: string | null;
     lat: number | null;
     lng: number | null;
-    peopleTrapped: number | null;
     openNeedsCount: number;
     topNeeds: TopNeed[];
     confidence: string | null;
@@ -42,6 +41,14 @@ export interface NeedCategory {
     color: string | null;
 }
 
+export interface NeedCommitment {
+    id: number;
+    name: string;
+    status: EnumOption;
+    allowedTransitions: EnumOption[];
+    at: string | null;
+}
+
 export interface Need {
     id: number;
     name: string;
@@ -50,7 +57,6 @@ export interface Need {
     unit: string | null;
     priority: EnumOption;
     status: EnumOption;
-    allowedTransitions: EnumOption[];
     isOpen: boolean;
     notes: string | null;
     createdBy: string | null;
@@ -59,7 +65,8 @@ export interface Need {
     createdAt: string | null;
     lastReportedAt: string | null;
     commitmentsCount?: number;
-    commitments?: { name: string; at: string | null }[];
+    statusCounts?: NeedStatusCount[];
+    commitments?: NeedCommitment[];
 }
 
 export interface NeedStatusCount {
@@ -94,7 +101,6 @@ export interface Building {
     address: string | null;
     lat: number | null;
     lng: number | null;
-    peopleTrapped: number | null;
     peopleEvacuated: number | null;
     residents: number | null;
     contactName: string | null;
@@ -152,7 +158,6 @@ export interface BuildingStats {
     sectores: number;
     necesidadesAbiertas: number;
     necesidadesCriticas: number;
-    personasAtrapadas: number;
     hospitales: number;
 }
 

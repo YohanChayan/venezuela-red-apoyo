@@ -43,7 +43,6 @@ class BuildingSummaryResource extends JsonResource
             'address' => $this->address,
             'lat' => $this->lat,
             'lng' => $this->lng,
-            'peopleTrapped' => $this->people_trapped_estimate,
             'openNeedsCount' => $openNeeds->count(),
             'topNeeds' => $openNeeds->take(3)->map(fn (Need $need) => [
                 'name' => $need->displayName(),

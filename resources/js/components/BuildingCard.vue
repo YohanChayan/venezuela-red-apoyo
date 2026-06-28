@@ -39,12 +39,6 @@ const priorityDot: Record<string, string> = {
             >
                 {{ building.mode.icon }} Rescate
             </span>
-            <span
-                v-if="building.peopleTrapped"
-                class="inline-flex items-center gap-1 rounded-full bg-red-600 px-2 py-0.5 text-xs font-semibold text-white"
-            >
-                ⚠️ {{ building.peopleTrapped }} atrapados (est.)
-            </span>
             <span class="text-xs text-slate-500">
                 {{ building.openNeedsCount }}
                 {{ building.openNeedsCount === 1 ? 'necesidad abierta' : 'necesidades abiertas' }}

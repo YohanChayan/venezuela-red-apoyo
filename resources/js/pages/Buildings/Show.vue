@@ -36,7 +36,6 @@ const fieldLabels: Record<string, string> = {
     contact_name: 'Contacto',
     contact_phone: 'Teléfono',
     notes: 'Notas',
-    people_trapped_estimate: 'Personas atrapadas',
     residents_estimate: 'Residentes',
     community_id: 'Sector',
 };
@@ -91,12 +90,6 @@ function formatDate(value: string | null): string {
                         {{ building.mode.icon }} {{ building.mode.label }}
                     </span>
                     <span class="rounded-lg bg-slate-100 px-2.5 py-1">🏚️ {{ building.structuralStatus.label }}</span>
-                    <span
-                        v-if="building.peopleTrapped"
-                        class="rounded-lg bg-red-600 px-2.5 py-1 font-semibold text-white"
-                    >
-                        ⚠️ {{ building.peopleTrapped }} personas atrapadas (est.)
-                    </span>
                     <span v-if="building.residents" class="rounded-lg bg-slate-100 px-2.5 py-1">
                         👥 {{ building.residents }} residentes
                     </span>

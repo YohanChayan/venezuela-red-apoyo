@@ -12,6 +12,7 @@ use Illuminate\Database\Eloquent\Model;
 use Illuminate\Database\Eloquent\Relations\BelongsTo;
 use Illuminate\Database\Eloquent\Relations\HasMany;
 use Illuminate\Database\Eloquent\SoftDeletes;
+use Illuminate\Support\Collection;
 use OwenIt\Auditing\Auditable as AuditableTrait;
 use OwenIt\Auditing\Contracts\Auditable;
 
@@ -106,5 +107,65 @@ class Need extends Model implements Auditable
         return $this->supply?->name
             ?? $this->custom_supply_name
             ?? 'Insumo sin especificar';
+    }
+
+    /**
+     * Commitments that still count toward the need's progress (cancelled
+     * commitments mean that person backed out and are ignored).
+     *
+     * @return Collection<int, NeedCommitment>
+     */
+    public function activeCommitments(): Collection
+    {
+        $commitments = $this->relationLoaded('commitments')
+            ? $this->commitments
+            : $this->commitments()->get();
+
+        return $commitments->reject(
+            fn (NeedCommitment $commitment) => $commitment->status === NeedStatus::Cancelada,
+        )->values();
+    }
+
+    /**
+     * The need's overall status, derived dynamically from its commitments: the
+     * status held by the most people wins, ties broken by the most advanced
+     * status. No active commitments means the need is still "solicitada".
+     */
+    public function dominantStatus(): NeedStatus
+    {
+        $active = $this->activeCommitments();
+
+        if ($active->isEmpty()) {
+            return NeedStatus::Solicitada;
+        }
+
+        $counts = $active->countBy(fn (NeedCommitment $commitment) => $commitment->status->value);
+        $max = $counts->max();
+
+        return collect(NeedStatus::cases())
+            ->filter(fn (NeedStatus $status) => ($counts->get($status->value, 0)) === $max)
+            ->sortByDesc(fn (NeedStatus $status) => $status->order())
+            ->first();
+    }
+
+    /**
+     * How many people sit in each lifecycle status, ordered along the
+     * lifecycle. Only statuses with at least one person are returned.
+     *
+     * @return array<int, array{status: NeedStatus, count: int}>
+     */
+    public function commitmentStatusCounts(): array
+    {
+        $counts = $this->activeCommitments()
+            ->countBy(fn (NeedCommitment $commitment) => $commitment->status->value);
+
+        return collect(NeedStatus::cases())
+            ->filter(fn (NeedStatus $status) => $counts->get($status->value, 0) > 0)
+            ->map(fn (NeedStatus $status) => [
+                'status' => $status,
+                'count' => $counts->get($status->value),
+            ])
+            ->values()
+            ->all();
     }
 }

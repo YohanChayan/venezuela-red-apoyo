@@ -8,14 +8,16 @@ use App\Enums\NeedStatus;
 use App\Models\Building;
 use App\Models\Contributor;
 use App\Models\Need;
+use App\Models\NeedCommitment;
 use App\Models\Supply;
 use Illuminate\Support\Facades\DB;
 use Illuminate\Validation\ValidationException;
 
 /**
- * Owns the need lifecycle: creation and the anti-chaos state machine. Status
- * changes are serialized with a row lock so two volunteers can't claim the
- * same need.
+ * Owns the need lifecycle. The state machine now lives per commitment: each
+ * person who takes charge advances their own status, and the need's overall
+ * status is derived from the mix. Changes are serialized with a row lock so
+ * concurrent volunteers don't clobber each other.
  */
 class NeedService
 {
@@ -75,47 +77,12 @@ class NeedService
     }
 
     /**
-     * Move a need to a new lifecycle state, enforcing valid transitions.
-     *
-     * @throws ValidationException on an invalid transition
-     */
-    public function transition(Need $need, NeedStatus $to, Contributor $by): Need
-    {
-        return DB::transaction(function () use ($need, $to, $by): Need {
-            /** @var Need $locked */
-            $locked = Need::whereKey($need->getKey())->lockForUpdate()->firstOrFail();
-            $from = $locked->status;
-
-            if (! $from->canTransitionTo($to)) {
-                throw ValidationException::withMessages([
-                    'status' => "Transición no permitida: {$from->label()} → {$to->label()}.",
-                ]);
-            }
-
-            $locked->status = $to;
-            $locked->last_reported_at = now();
-
-            match ($to) {
-                NeedStatus::Comprometida => $locked->forceFill([
-                    'claimed_by_contributor_id' => $by->id,
-                    'claimed_at' => now(),
-                ]),
-                NeedStatus::Entregada => $locked->forceFill(['fulfilled_at' => now()]),
-                NeedStatus::Confirmada => $locked->forceFill(['confirmed_at' => now()]),
-                default => $locked,
-            };
-
-            $locked->save();
-
-            $this->statusDeriver->apply($locked->building);
-
-            return $locked;
-        });
-    }
-
-    /**
      * Record that a person commits to a need ("me encargo"). Many people can
-     * commit to the same need; one commitment per contributor.
+     * commit to the same need, INCLUDING several from the same device — a
+     * coordinator may anotar varias personas/brigadas. Commitments are keyed by
+     * name (case-insensitive) within a need, so submitting the same name twice
+     * is idempotent while distinct names each create a row. A fresh (or
+     * previously cancelled) commitment starts at "comprometida".
      */
     public function commit(Need $need, Contributor $by, ?string $name = null): Need
     {
@@ -123,27 +90,90 @@ class NeedService
             /** @var Need $locked */
             $locked = Need::whereKey($need->getKey())->lockForUpdate()->firstOrFail();
 
-            $commitment = $locked->commitments()->firstOrNew(['contributor_id' => $by->id]);
-            if ($name !== null && trim($name) !== '') {
-                $commitment->name = trim($name);
-            } elseif (! $commitment->exists) {
-                $commitment->name = $by->name;
+            $trimmed = $name !== null ? trim($name) : '';
+
+            if ($trimmed !== '') {
+                // Identify by name: a new name adds a helper; the same name updates.
+                $commitment = $locked->commitments()
+                    ->whereRaw('LOWER(name) = ?', [mb_strtolower($trimmed)])
+                    ->first()
+                    ?? $locked->commitments()->make(['contributor_id' => $by->id]);
+                $commitment->name = $trimmed;
+            } else {
+                // Anonymous: keep a single anonymous row per device.
+                $commitment = $locked->commitments()
+                    ->where('contributor_id', $by->id)
+                    ->whereNull('name')
+                    ->first()
+                    ?? $locked->commitments()->make(['contributor_id' => $by->id]);
+            }
+
+            // Joining (or re-joining after cancelling) puts the helper at the
+            // start of their own lifecycle; an active commitment is untouched.
+            if (! $commitment->exists || $commitment->status === NeedStatus::Cancelada) {
+                $commitment->status = NeedStatus::Comprometida;
             }
             $commitment->save();
 
-            // The first commitment moves the need into "Asignada" (comprometida).
-            if ($locked->status === NeedStatus::Solicitada) {
-                $locked->status = NeedStatus::Comprometida;
-                $locked->claimed_by_contributor_id ??= $by->id;
-                $locked->claimed_at ??= now();
-            }
-
-            $locked->last_reported_at = now();
-            $locked->save();
-
-            $this->statusDeriver->apply($locked->building);
+            $locked->claimed_by_contributor_id ??= $by->id;
+            $this->syncStatus($locked);
 
             return $locked;
         });
+    }
+
+    /**
+     * Advance a single person's commitment through its lifecycle, enforcing
+     * valid transitions, then recompute the need's overall status.
+     *
+     * @throws ValidationException on an invalid transition
+     */
+    public function transitionCommitment(NeedCommitment $commitment, NeedStatus $to, Contributor $by): NeedCommitment
+    {
+        return DB::transaction(function () use ($commitment, $to): NeedCommitment {
+            /** @var NeedCommitment $locked */
+            $locked = NeedCommitment::whereKey($commitment->getKey())->lockForUpdate()->firstOrFail();
+            $from = $locked->status;
+
+            if (! $from->canCommitmentTransitionTo($to)) {
+                throw ValidationException::withMessages([
+                    'status' => "Transición no permitida: {$from->label()} → {$to->label()}.",
+                ]);
+            }
+
+            $locked->status = $to;
+            $locked->save();
+
+            /** @var Need $need */
+            $need = Need::whereKey($locked->need_id)->lockForUpdate()->firstOrFail();
+            $this->syncStatus($need);
+
+            return $locked;
+        });
+    }
+
+    /**
+     * Recompute a need's overall status from the dynamic mix of its
+     * commitments, keep its lifecycle timestamps coherent, and cascade to the
+     * building semaphore. The stored status is a cache of the derived value.
+     */
+    private function syncStatus(Need $need): void
+    {
+        $need->load('commitments');
+        $status = $need->dominantStatus();
+
+        $need->status = $status;
+        $need->last_reported_at = now();
+
+        match ($status) {
+            NeedStatus::Comprometida => $need->claimed_at ??= now(),
+            NeedStatus::Entregada => $need->fulfilled_at ??= now(),
+            NeedStatus::Confirmada => $need->confirmed_at ??= now(),
+            default => null,
+        };
+
+        $need->save();
+
+        $this->statusDeriver->apply($need->building);
     }
 }
