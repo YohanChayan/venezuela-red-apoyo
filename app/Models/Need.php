@@ -141,6 +141,11 @@ class Need extends Model implements Auditable
      */
     public function dominantStatus(): NeedStatus
     {
+        // A need-level cancellation wins over any per-commitment derivation.
+        if ($this->cancelled_at !== null) {
+            return NeedStatus::Cancelada;
+        }
+
         $active = $this->activeCommitments();
 
         if ($active->isEmpty()) {

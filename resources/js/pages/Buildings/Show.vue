@@ -18,8 +18,8 @@ const props = defineProps<{
     history: BuildingHistoryEntry[];
 }>();
 
-const openNeeds = computed(() => props.building.needs.filter((need) => need.isOpen));
-const resolvedNeeds = computed(() => props.building.needs.filter((need) => !need.isOpen));
+const openNeeds = computed(() => (props.building.needs ?? []).filter((need) => need.isOpen));
+const resolvedNeeds = computed(() => (props.building.needs ?? []).filter((need) => !need.isOpen));
 </script>
 
 <template>

@@ -213,6 +213,7 @@ it('cancels the whole need and all its commitments, without auto-reopening', fun
 
     $need->refresh();
     expect($need->status)->toBe(NeedStatus::Cancelada)
+        ->and($need->dominantStatus())->toBe(NeedStatus::Cancelada) // what the resource renders
         ->and($need->cancelled_at)->not->toBeNull()
         ->and($need->commitments()->where('status', '!=', 'cancelada')->count())->toBe(0);
 });
