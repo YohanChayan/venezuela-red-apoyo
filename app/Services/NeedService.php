@@ -116,6 +116,45 @@ class NeedService
             $commitment->save();
 
             $locked->claimed_by_contributor_id ??= $by->id;
+            $locked->cancelled_at = null; // committing revives a cancelled need
+            $this->syncStatus($locked);
+
+            return $locked;
+        });
+    }
+
+    /**
+     * Cancel the WHOLE need: cancel every commitment and close the need so it
+     * does not auto-reopen. Use when the request is no longer valid.
+     */
+    public function cancelNeed(Need $need): Need
+    {
+        return DB::transaction(function () use ($need): Need {
+            /** @var Need $locked */
+            $locked = Need::whereKey($need->getKey())->lockForUpdate()->firstOrFail();
+
+            $locked->commitments()
+                ->where('status', '!=', NeedStatus::Cancelada->value)
+                ->update(['status' => NeedStatus::Cancelada->value]);
+
+            $locked->cancelled_at = now();
+            $this->syncStatus($locked);
+
+            return $locked;
+        });
+    }
+
+    /**
+     * Reopen a cancelled need back to "solicitada" so people can take it on
+     * again (cancelled commitments stay cancelled).
+     */
+    public function reopenNeed(Need $need): Need
+    {
+        return DB::transaction(function () use ($need): Need {
+            /** @var Need $locked */
+            $locked = Need::whereKey($need->getKey())->lockForUpdate()->firstOrFail();
+
+            $locked->cancelled_at = null;
             $this->syncStatus($locked);
 
             return $locked;
@@ -159,6 +198,16 @@ class NeedService
      */
     private function syncStatus(Need $need): void
     {
+        // A need-level cancellation overrides the per-commitment derivation.
+        if ($need->cancelled_at !== null) {
+            $need->status = NeedStatus::Cancelada;
+            $need->last_reported_at = now();
+            $need->save();
+            $this->statusDeriver->apply($need->building);
+
+            return;
+        }
+
         $need->load('commitments');
         $status = $need->dominantStatus();
 

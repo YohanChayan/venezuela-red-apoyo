@@ -22,11 +22,13 @@ use App\Models\SupplyCategory;
 use App\Services\BuildingService;
 use App\Services\DuplicateFinder;
 use App\Support\EnumOptions;
+use Illuminate\Database\Eloquent\Relations\MorphTo;
 use Illuminate\Http\JsonResponse;
 use Illuminate\Http\RedirectResponse;
 use Illuminate\Http\Request;
 use Inertia\Inertia;
 use Inertia\Response;
+use OwenIt\Auditing\Models\Audit;
 
 class BuildingController extends Controller
 {
@@ -227,16 +229,62 @@ class BuildingController extends Controller
      */
     private function buildHistory(Building $building): array
     {
-        return $building->audits()->with('user')->latest()->limit(25)->get()->map(fn ($audit) => [
+        $needIds = $building->needs()->withTrashed()->pluck('id');
+
+        return Audit::query()
+            ->with(['user', 'auditable' => fn (MorphTo $morphTo) => $morphTo->morphWith([Need::class => ['supply']])])
+            ->where(function ($query) use ($building, $needIds) {
+                $query
+                    ->where(fn ($w) => $w->where('auditable_type', Building::class)->where('auditable_id', $building->id))
+                    ->orWhere(fn ($w) => $w->where('auditable_type', Need::class)->whereIn('auditable_id', $needIds));
+            })
+            ->latest()
+            ->limit(30)
+            ->get()
+            ->map(fn (Audit $audit) => $this->presentActivity($audit))
+            ->all();
+    }
+
+    /**
+     * Turn an audit into a human, public-friendly activity line.
+     *
+     * @return array<string, mixed>
+     */
+    private function presentActivity(Audit $audit): array
+    {
+        $user = $audit->user?->name ?: 'Anónimo';
+
+        if ($audit->auditable_type === Need::class) {
+            $name = $audit->auditable?->displayName() ?? 'una necesidad';
+            $newStatus = $audit->getModified()['status']['new'] ?? null;
+            if ($newStatus instanceof \BackedEnum) {
+                $newStatus = $newStatus->value;
+            }
+
+            $summary = match (true) {
+                $audit->event === 'created' => "agregó la necesidad «{$name}»",
+                $audit->event === 'deleted' => "quitó la necesidad «{$name}»",
+                $newStatus === 'comprometida' => "se encargó de «{$name}»",
+                $newStatus === 'en_camino' => "va en camino con «{$name}»",
+                $newStatus === 'entregada' => "entregó «{$name}»",
+                $newStatus === 'confirmada' => "resolvió «{$name}»",
+                $newStatus === 'cancelada' => "canceló la necesidad «{$name}»",
+                $newStatus === 'solicitada' => "reabrió la necesidad «{$name}»",
+                default => "actualizó la necesidad «{$name}»",
+            };
+        } else {
+            $summary = match ($audit->event) {
+                'created' => 'registró este lugar',
+                'deleted' => 'eliminó este lugar',
+                default => 'actualizó los datos del lugar',
+            };
+        }
+
+        return [
             'id' => $audit->id,
-            'event' => $audit->event,
-            'user' => $audit->user?->name ?: 'Anónimo',
+            'user' => $user,
+            'summary' => $summary,
             'at' => $audit->created_at?->toIso8601String(),
-            'changes' => collect($audit->getModified())->map(fn ($value, $field) => [
-                'field' => $field,
-                'old' => $value['old'] ?? null,
-                'new' => $value['new'] ?? null,
-            ])->values()->all(),
-        ])->all();
+        ];
     }
 }

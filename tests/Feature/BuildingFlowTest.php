@@ -197,6 +197,41 @@ it('reopens a need when every commitment is cancelled', function () {
     expect($need->fresh()->status)->toBe(NeedStatus::Solicitada);
 });
 
+it('cancels the whole need and all its commitments, without auto-reopening', function () {
+    $building = registerBuilding();
+    $need = $building->needs()->create([
+        'custom_supply_name' => 'Agua',
+        'priority' => 'media',
+        'status' => NeedStatus::Solicitada,
+    ]);
+
+    $a = Contributor::create(['token' => 'dev-a', 'trust_level' => 'normal']);
+    app(NeedService::class)->commit($need, $a, 'Carlos');
+    expect($need->fresh()->status)->toBe(NeedStatus::Comprometida);
+
+    $this->post("/necesidades/{$need->id}/cancelar")->assertRedirect();
+
+    $need->refresh();
+    expect($need->status)->toBe(NeedStatus::Cancelada)
+        ->and($need->cancelled_at)->not->toBeNull()
+        ->and($need->commitments()->where('status', '!=', 'cancelada')->count())->toBe(0);
+});
+
+it('reopens a cancelled need to solicitada', function () {
+    $building = registerBuilding();
+    $need = $building->needs()->create([
+        'custom_supply_name' => 'Agua',
+        'priority' => 'media',
+        'status' => NeedStatus::Solicitada,
+    ]);
+
+    app(NeedService::class)->cancelNeed($need);
+    expect($need->fresh()->status)->toBe(NeedStatus::Cancelada);
+
+    $this->post("/necesidades/{$need->id}/reabrir")->assertRedirect();
+    expect($need->fresh()->status)->toBe(NeedStatus::Solicitada);
+});
+
 it('commits to a need via the public endpoint', function () {
     $building = registerBuilding();
     $need = $building->needs()->create([

@@ -49,4 +49,18 @@ class NeedController extends Controller
 
         return back()->with('success', 'Estado actualizado.');
     }
+
+    public function cancel(Need $need): RedirectResponse
+    {
+        $this->needs->cancelNeed($need);
+
+        return back()->with('success', 'Necesidad cancelada.');
+    }
+
+    public function reopen(Need $need): RedirectResponse
+    {
+        $this->needs->reopenNeed($need);
+
+        return back()->with('success', 'Necesidad reabierta.');
+    }
 }

@@ -15,6 +15,10 @@ return new class extends Migration
     public function up(): void
     {
         Schema::table('need_commitments', function (Blueprint $table) {
+            // MySQL backs the `need_id` foreign key with the composite unique
+            // index (need_id is its leftmost column), so it refuses to drop the
+            // index while the FK exists. Give the FK its own index first.
+            $table->index('need_id');
             $table->dropUnique(['need_id', 'contributor_id']);
         });
     }
@@ -22,7 +26,10 @@ return new class extends Migration
     public function down(): void
     {
         Schema::table('need_commitments', function (Blueprint $table) {
+            // Restore the composite unique (which again covers the need_id FK),
+            // then drop the standalone index added in up().
             $table->unique(['need_id', 'contributor_id']);
+            $table->dropIndex(['need_id']);
         });
     }
 };

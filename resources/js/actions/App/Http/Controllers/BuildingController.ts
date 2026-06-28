@@ -1,7 +1,7 @@
 import { queryParams, type RouteQueryOptions, type RouteDefinition, type RouteFormDefinition, applyUrlDefaults } from './../../../../wayfinder'
 /**
 * @see \App\Http\Controllers\BuildingController::index
-* @see app/Http/Controllers/BuildingController.php:35
+* @see app/Http/Controllers/BuildingController.php:37
 * @route '/'
 */
 export const index = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -16,7 +16,7 @@ index.definition = {
 
 /**
 * @see \App\Http\Controllers\BuildingController::index
-* @see app/Http/Controllers/BuildingController.php:35
+* @see app/Http/Controllers/BuildingController.php:37
 * @route '/'
 */
 index.url = (options?: RouteQueryOptions) => {
@@ -25,7 +25,7 @@ index.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\BuildingController::index
-* @see app/Http/Controllers/BuildingController.php:35
+* @see app/Http/Controllers/BuildingController.php:37
 * @route '/'
 */
 index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -35,7 +35,7 @@ index.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\BuildingController::index
-* @see app/Http/Controllers/BuildingController.php:35
+* @see app/Http/Controllers/BuildingController.php:37
 * @route '/'
 */
 index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -45,7 +45,7 @@ index.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\BuildingController::index
-* @see app/Http/Controllers/BuildingController.php:35
+* @see app/Http/Controllers/BuildingController.php:37
 * @route '/'
 */
 const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -55,7 +55,7 @@ const indexForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\BuildingController::index
-* @see app/Http/Controllers/BuildingController.php:35
+* @see app/Http/Controllers/BuildingController.php:37
 * @route '/'
 */
 indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -65,7 +65,7 @@ indexForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\BuildingController::index
-* @see app/Http/Controllers/BuildingController.php:35
+* @see app/Http/Controllers/BuildingController.php:37
 * @route '/'
 */
 indexForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -82,7 +82,7 @@ index.form = indexForm
 
 /**
 * @see \App\Http\Controllers\BuildingController::similar
-* @see app/Http/Controllers/BuildingController.php:134
+* @see app/Http/Controllers/BuildingController.php:136
 * @route '/api/edificios-similares'
 */
 export const similar = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -97,7 +97,7 @@ similar.definition = {
 
 /**
 * @see \App\Http\Controllers\BuildingController::similar
-* @see app/Http/Controllers/BuildingController.php:134
+* @see app/Http/Controllers/BuildingController.php:136
 * @route '/api/edificios-similares'
 */
 similar.url = (options?: RouteQueryOptions) => {
@@ -106,7 +106,7 @@ similar.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\BuildingController::similar
-* @see app/Http/Controllers/BuildingController.php:134
+* @see app/Http/Controllers/BuildingController.php:136
 * @route '/api/edificios-similares'
 */
 similar.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -116,7 +116,7 @@ similar.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\BuildingController::similar
-* @see app/Http/Controllers/BuildingController.php:134
+* @see app/Http/Controllers/BuildingController.php:136
 * @route '/api/edificios-similares'
 */
 similar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -126,7 +126,7 @@ similar.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\BuildingController::similar
-* @see app/Http/Controllers/BuildingController.php:134
+* @see app/Http/Controllers/BuildingController.php:136
 * @route '/api/edificios-similares'
 */
 const similarForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -136,7 +136,7 @@ const similarForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> =>
 
 /**
 * @see \App\Http\Controllers\BuildingController::similar
-* @see app/Http/Controllers/BuildingController.php:134
+* @see app/Http/Controllers/BuildingController.php:136
 * @route '/api/edificios-similares'
 */
 similarForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -146,7 +146,7 @@ similarForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => (
 
 /**
 * @see \App\Http\Controllers\BuildingController::similar
-* @see app/Http/Controllers/BuildingController.php:134
+* @see app/Http/Controllers/BuildingController.php:136
 * @route '/api/edificios-similares'
 */
 similarForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -163,7 +163,7 @@ similar.form = similarForm
 
 /**
 * @see \App\Http\Controllers\BuildingController::create
-* @see app/Http/Controllers/BuildingController.php:87
+* @see app/Http/Controllers/BuildingController.php:89
 * @route '/edificios/registrar'
 */
 export const create = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -178,7 +178,7 @@ create.definition = {
 
 /**
 * @see \App\Http\Controllers\BuildingController::create
-* @see app/Http/Controllers/BuildingController.php:87
+* @see app/Http/Controllers/BuildingController.php:89
 * @route '/edificios/registrar'
 */
 create.url = (options?: RouteQueryOptions) => {
@@ -187,7 +187,7 @@ create.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\BuildingController::create
-* @see app/Http/Controllers/BuildingController.php:87
+* @see app/Http/Controllers/BuildingController.php:89
 * @route '/edificios/registrar'
 */
 create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -197,7 +197,7 @@ create.get = (options?: RouteQueryOptions): RouteDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\BuildingController::create
-* @see app/Http/Controllers/BuildingController.php:87
+* @see app/Http/Controllers/BuildingController.php:89
 * @route '/edificios/registrar'
 */
 create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -207,7 +207,7 @@ create.head = (options?: RouteQueryOptions): RouteDefinition<'head'> => ({
 
 /**
 * @see \App\Http\Controllers\BuildingController::create
-* @see app/Http/Controllers/BuildingController.php:87
+* @see app/Http/Controllers/BuildingController.php:89
 * @route '/edificios/registrar'
 */
 const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -217,7 +217,7 @@ const createForm = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => 
 
 /**
 * @see \App\Http\Controllers\BuildingController::create
-* @see app/Http/Controllers/BuildingController.php:87
+* @see app/Http/Controllers/BuildingController.php:89
 * @route '/edificios/registrar'
 */
 createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -227,7 +227,7 @@ createForm.get = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
 
 /**
 * @see \App\Http\Controllers\BuildingController::create
-* @see app/Http/Controllers/BuildingController.php:87
+* @see app/Http/Controllers/BuildingController.php:89
 * @route '/edificios/registrar'
 */
 createForm.head = (options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -244,7 +244,7 @@ create.form = createForm
 
 /**
 * @see \App\Http\Controllers\BuildingController::show
-* @see app/Http/Controllers/BuildingController.php:108
+* @see app/Http/Controllers/BuildingController.php:110
 * @route '/edificios/{building}'
 */
 export const show = (args: { building: string | { slug: string } } | [building: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -259,7 +259,7 @@ show.definition = {
 
 /**
 * @see \App\Http\Controllers\BuildingController::show
-* @see app/Http/Controllers/BuildingController.php:108
+* @see app/Http/Controllers/BuildingController.php:110
 * @route '/edificios/{building}'
 */
 show.url = (args: { building: string | { slug: string } } | [building: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions) => {
@@ -292,7 +292,7 @@ show.url = (args: { building: string | { slug: string } } | [building: string | 
 
 /**
 * @see \App\Http\Controllers\BuildingController::show
-* @see app/Http/Controllers/BuildingController.php:108
+* @see app/Http/Controllers/BuildingController.php:110
 * @route '/edificios/{building}'
 */
 show.get = (args: { building: string | { slug: string } } | [building: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteDefinition<'get'> => ({
@@ -302,7 +302,7 @@ show.get = (args: { building: string | { slug: string } } | [building: string | 
 
 /**
 * @see \App\Http\Controllers\BuildingController::show
-* @see app/Http/Controllers/BuildingController.php:108
+* @see app/Http/Controllers/BuildingController.php:110
 * @route '/edificios/{building}'
 */
 show.head = (args: { building: string | { slug: string } } | [building: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteDefinition<'head'> => ({
@@ -312,7 +312,7 @@ show.head = (args: { building: string | { slug: string } } | [building: string |
 
 /**
 * @see \App\Http\Controllers\BuildingController::show
-* @see app/Http/Controllers/BuildingController.php:108
+* @see app/Http/Controllers/BuildingController.php:110
 * @route '/edificios/{building}'
 */
 const showForm = (args: { building: string | { slug: string } } | [building: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -322,7 +322,7 @@ const showForm = (args: { building: string | { slug: string } } | [building: str
 
 /**
 * @see \App\Http\Controllers\BuildingController::show
-* @see app/Http/Controllers/BuildingController.php:108
+* @see app/Http/Controllers/BuildingController.php:110
 * @route '/edificios/{building}'
 */
 showForm.get = (args: { building: string | { slug: string } } | [building: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -332,7 +332,7 @@ showForm.get = (args: { building: string | { slug: string } } | [building: strin
 
 /**
 * @see \App\Http\Controllers\BuildingController::show
-* @see app/Http/Controllers/BuildingController.php:108
+* @see app/Http/Controllers/BuildingController.php:110
 * @route '/edificios/{building}'
 */
 showForm.head = (args: { building: string | { slug: string } } | [building: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteFormDefinition<'get'> => ({
@@ -349,7 +349,7 @@ show.form = showForm
 
 /**
 * @see \App\Http\Controllers\BuildingController::store
-* @see app/Http/Controllers/BuildingController.php:99
+* @see app/Http/Controllers/BuildingController.php:101
 * @route '/edificios'
 */
 export const store = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -364,7 +364,7 @@ store.definition = {
 
 /**
 * @see \App\Http\Controllers\BuildingController::store
-* @see app/Http/Controllers/BuildingController.php:99
+* @see app/Http/Controllers/BuildingController.php:101
 * @route '/edificios'
 */
 store.url = (options?: RouteQueryOptions) => {
@@ -373,7 +373,7 @@ store.url = (options?: RouteQueryOptions) => {
 
 /**
 * @see \App\Http\Controllers\BuildingController::store
-* @see app/Http/Controllers/BuildingController.php:99
+* @see app/Http/Controllers/BuildingController.php:101
 * @route '/edificios'
 */
 store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
@@ -383,7 +383,7 @@ store.post = (options?: RouteQueryOptions): RouteDefinition<'post'> => ({
 
 /**
 * @see \App\Http\Controllers\BuildingController::store
-* @see app/Http/Controllers/BuildingController.php:99
+* @see app/Http/Controllers/BuildingController.php:101
 * @route '/edificios'
 */
 const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -393,7 +393,7 @@ const storeForm = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => 
 
 /**
 * @see \App\Http\Controllers\BuildingController::store
-* @see app/Http/Controllers/BuildingController.php:99
+* @see app/Http/Controllers/BuildingController.php:101
 * @route '/edificios'
 */
 storeForm.post = (options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -405,7 +405,7 @@ store.form = storeForm
 
 /**
 * @see \App\Http\Controllers\BuildingController::update
-* @see app/Http/Controllers/BuildingController.php:122
+* @see app/Http/Controllers/BuildingController.php:124
 * @route '/edificios/{building}'
 */
 export const update = (args: { building: string | { slug: string } } | [building: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -420,7 +420,7 @@ update.definition = {
 
 /**
 * @see \App\Http\Controllers\BuildingController::update
-* @see app/Http/Controllers/BuildingController.php:122
+* @see app/Http/Controllers/BuildingController.php:124
 * @route '/edificios/{building}'
 */
 update.url = (args: { building: string | { slug: string } } | [building: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions) => {
@@ -453,7 +453,7 @@ update.url = (args: { building: string | { slug: string } } | [building: string 
 
 /**
 * @see \App\Http\Controllers\BuildingController::update
-* @see app/Http/Controllers/BuildingController.php:122
+* @see app/Http/Controllers/BuildingController.php:124
 * @route '/edificios/{building}'
 */
 update.put = (args: { building: string | { slug: string } } | [building: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteDefinition<'put'> => ({
@@ -463,7 +463,7 @@ update.put = (args: { building: string | { slug: string } } | [building: string 
 
 /**
 * @see \App\Http\Controllers\BuildingController::update
-* @see app/Http/Controllers/BuildingController.php:122
+* @see app/Http/Controllers/BuildingController.php:124
 * @route '/edificios/{building}'
 */
 const updateForm = (args: { building: string | { slug: string } } | [building: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
@@ -478,7 +478,7 @@ const updateForm = (args: { building: string | { slug: string } } | [building: s
 
 /**
 * @see \App\Http\Controllers\BuildingController::update
-* @see app/Http/Controllers/BuildingController.php:122
+* @see app/Http/Controllers/BuildingController.php:124
 * @route '/edificios/{building}'
 */
 updateForm.put = (args: { building: string | { slug: string } } | [building: string | { slug: string } ] | string | { slug: string }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({

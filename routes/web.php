@@ -24,6 +24,8 @@ Route::middleware(['throttle:30,1', EnsureWritable::class])->group(function () {
     Route::post('/edificios/{building:slug}/necesidades', [NeedController::class, 'store'])->name('needs.store');
     Route::post('/edificios/{building:slug}/necesidades/lote', [NeedController::class, 'storeBatch'])->name('needs.batch');
     Route::post('/necesidades/{need}/comprometerse', [NeedController::class, 'commit'])->name('needs.commit');
+    Route::post('/necesidades/{need}/cancelar', [NeedController::class, 'cancel'])->name('needs.cancel');
+    Route::post('/necesidades/{need}/reabrir', [NeedController::class, 'reopen'])->name('needs.reopen');
     Route::patch('/commitments/{commitment}/estado', [NeedController::class, 'updateCommitmentStatus'])->name('commitments.status');
 });
 

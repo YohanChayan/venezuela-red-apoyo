@@ -75,6 +75,18 @@ function commit(): void {
         },
     });
 }
+
+const isCancelled = computed(() => props.need.status.value === 'cancelada');
+
+function cancelNeed(): void {
+    if (confirm('¿Cancelar toda esta necesidad? Se cancelarán también todos los compromisos.')) {
+        router.post(`/necesidades/${props.need.id}/cancelar`, {}, { preserveScroll: true });
+    }
+}
+
+function reopenNeed(): void {
+    router.post(`/necesidades/${props.need.id}/reabrir`, {}, { preserveScroll: true });
+}
 </script>
 
 <template>
@@ -116,15 +128,33 @@ function commit(): void {
                 {{ count.label }} · {{ count.count }}
             </span>
 
-            <button
-                type="button"
-                class="ml-auto rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100"
-                :aria-expanded="showPeople"
-                @click="showPeople = !showPeople"
-            >
-                👥 {{ peopleToggleLabel }}
-                <span class="ml-0.5 inline-block transition" :class="{ 'rotate-180': showPeople }">▾</span>
-            </button>
+            <div class="ml-auto flex items-center gap-1.5">
+                <button
+                    type="button"
+                    class="rounded-lg px-2.5 py-1 text-xs font-semibold text-slate-600 transition hover:bg-slate-100"
+                    :aria-expanded="showPeople"
+                    @click="showPeople = !showPeople"
+                >
+                    👥 {{ peopleToggleLabel }}
+                    <span class="ml-0.5 inline-block transition" :class="{ 'rotate-180': showPeople }">▾</span>
+                </button>
+                <button
+                    v-if="need.isOpen"
+                    type="button"
+                    class="rounded-lg px-2 py-1 text-xs font-medium text-slate-400 transition hover:bg-red-50 hover:text-red-600"
+                    @click="cancelNeed"
+                >
+                    ✕ Cancelar
+                </button>
+                <button
+                    v-else-if="isCancelled"
+                    type="button"
+                    class="rounded-lg px-2 py-1 text-xs font-medium text-slate-400 transition hover:bg-slate-100 hover:text-slate-700"
+                    @click="reopenNeed"
+                >
+                    ↩ Reabrir
+                </button>
+            </div>
         </div>
 
         <!-- Toggleable per-person list: each person owns their status + buttons. -->

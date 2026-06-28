@@ -26,6 +26,12 @@ class Need extends Model implements Auditable
      */
     protected array $auditExclude = [
         'version',
+        'last_reported_at',
+        'claimed_at',
+        'fulfilled_at',
+        'confirmed_at',
+        'cancelled_at',
+        'claimed_by_contributor_id',
     ];
 
     protected $fillable = [
@@ -42,6 +48,7 @@ class Need extends Model implements Auditable
         'claimed_at',
         'fulfilled_at',
         'confirmed_at',
+        'cancelled_at',
         'created_by',
         'last_reported_at',
     ];
@@ -55,6 +62,7 @@ class Need extends Model implements Auditable
             'claimed_at' => 'datetime',
             'fulfilled_at' => 'datetime',
             'confirmed_at' => 'datetime',
+            'cancelled_at' => 'datetime',
             'last_reported_at' => 'datetime',
         ];
     }

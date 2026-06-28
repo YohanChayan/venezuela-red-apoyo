@@ -239,10 +239,172 @@ commitForm.post = (args: { need: number | { id: number } } | [need: number | { i
 
 commit.form = commitForm
 
+/**
+* @see \App\Http\Controllers\NeedController::cancel
+* @see app/Http/Controllers/NeedController.php:53
+* @route '/necesidades/{need}/cancelar'
+*/
+export const cancel = (args: { need: number | { id: number } } | [need: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: cancel.url(args, options),
+    method: 'post',
+})
+
+cancel.definition = {
+    methods: ["post"],
+    url: '/necesidades/{need}/cancelar',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\NeedController::cancel
+* @see app/Http/Controllers/NeedController.php:53
+* @route '/necesidades/{need}/cancelar'
+*/
+cancel.url = (args: { need: number | { id: number } } | [need: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { need: args }
+    }
+
+    if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+        args = { need: args.id }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            need: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        need: typeof args.need === 'object'
+        ? args.need.id
+        : args.need,
+    }
+
+    return cancel.definition.url
+            .replace('{need}', parsedArgs.need.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\NeedController::cancel
+* @see app/Http/Controllers/NeedController.php:53
+* @route '/necesidades/{need}/cancelar'
+*/
+cancel.post = (args: { need: number | { id: number } } | [need: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: cancel.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\NeedController::cancel
+* @see app/Http/Controllers/NeedController.php:53
+* @route '/necesidades/{need}/cancelar'
+*/
+const cancelForm = (args: { need: number | { id: number } } | [need: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: cancel.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\NeedController::cancel
+* @see app/Http/Controllers/NeedController.php:53
+* @route '/necesidades/{need}/cancelar'
+*/
+cancelForm.post = (args: { need: number | { id: number } } | [need: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: cancel.url(args, options),
+    method: 'post',
+})
+
+cancel.form = cancelForm
+
+/**
+* @see \App\Http\Controllers\NeedController::reopen
+* @see app/Http/Controllers/NeedController.php:60
+* @route '/necesidades/{need}/reabrir'
+*/
+export const reopen = (args: { need: number | { id: number } } | [need: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: reopen.url(args, options),
+    method: 'post',
+})
+
+reopen.definition = {
+    methods: ["post"],
+    url: '/necesidades/{need}/reabrir',
+} satisfies RouteDefinition<["post"]>
+
+/**
+* @see \App\Http\Controllers\NeedController::reopen
+* @see app/Http/Controllers/NeedController.php:60
+* @route '/necesidades/{need}/reabrir'
+*/
+reopen.url = (args: { need: number | { id: number } } | [need: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions) => {
+    if (typeof args === 'string' || typeof args === 'number') {
+        args = { need: args }
+    }
+
+    if (typeof args === 'object' && !Array.isArray(args) && 'id' in args) {
+        args = { need: args.id }
+    }
+
+    if (Array.isArray(args)) {
+        args = {
+            need: args[0],
+        }
+    }
+
+    args = applyUrlDefaults(args)
+
+    const parsedArgs = {
+        need: typeof args.need === 'object'
+        ? args.need.id
+        : args.need,
+    }
+
+    return reopen.definition.url
+            .replace('{need}', parsedArgs.need.toString())
+            .replace(/\/+$/, '') + queryParams(options)
+}
+
+/**
+* @see \App\Http\Controllers\NeedController::reopen
+* @see app/Http/Controllers/NeedController.php:60
+* @route '/necesidades/{need}/reabrir'
+*/
+reopen.post = (args: { need: number | { id: number } } | [need: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteDefinition<'post'> => ({
+    url: reopen.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\NeedController::reopen
+* @see app/Http/Controllers/NeedController.php:60
+* @route '/necesidades/{need}/reabrir'
+*/
+const reopenForm = (args: { need: number | { id: number } } | [need: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: reopen.url(args, options),
+    method: 'post',
+})
+
+/**
+* @see \App\Http\Controllers\NeedController::reopen
+* @see app/Http/Controllers/NeedController.php:60
+* @route '/necesidades/{need}/reabrir'
+*/
+reopenForm.post = (args: { need: number | { id: number } } | [need: number | { id: number } ] | number | { id: number }, options?: RouteQueryOptions): RouteFormDefinition<'post'> => ({
+    action: reopen.url(args, options),
+    method: 'post',
+})
+
+reopen.form = reopenForm
+
 const needs = {
     store: Object.assign(store, store),
     batch: Object.assign(batch, batch),
     commit: Object.assign(commit, commit),
+    cancel: Object.assign(cancel, cancel),
+    reopen: Object.assign(reopen, reopen),
 }
 
 export default needs
